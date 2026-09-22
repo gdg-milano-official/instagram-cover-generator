@@ -3,6 +3,8 @@
 Prende gli speaker confermati da Sessionize e per ognuno genera la locandina
 (PNG quadrato) piu' il testo del post per Instagram e LinkedIn, con o senza AI.
 
+![Interfaccia del generatore: configurazione evento, anteprima della locandina e testi per Instagram e LinkedIn](docs/screenshot.png)
+
 ## Avvio
 
 ```bash
