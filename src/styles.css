@@ -1,0 +1,325 @@
+/* Tema ripreso da 2026.devfestmilano.it: token, font e dettagli sono i loro. */
+:root {
+  --bg: #fbfaf6;
+  --paper: #f3f0e7;
+  --card: #ffffff;
+  --fg: #17150f;
+  --muted: #6b6658;
+  --border: #e6e2d6;
+  --soft: #f0ede3;
+  --blue: #4285f4;
+  --red: #ea4335;
+  --yellow: #fbbc04;
+  --green: #34a853;
+  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Ccircle cx='2' cy='2' r='1.3' fill='%2317150f' fill-opacity='0.1'/%3E%3C/svg%3E");
+  --display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --body: 'Hanken Grotesk', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+
+body.dark {
+  --bg: #0f0e0c;
+  --paper: #161410;
+  --card: #1a1815;
+  --fg: #f4f1e9;
+  --muted: #a39e90;
+  --border: #2b2823;
+  --soft: #1c1a16;
+  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Ccircle cx='2' cy='2' r='1.3' fill='%23f4f1e9' fill-opacity='0.13'/%3E%3C/svg%3E");
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  background-image: var(--dots);
+  color: var(--fg);
+  font-family: var(--body);
+  padding: 28px;
+}
+
+/* ---------- Chrome dell'app ---------- */
+
+.topbar { max-width: 1180px; margin: 0 auto 28px; }
+.topbar h1 { font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -.6px; margin-bottom: 18px; }
+
+.config {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.config label { display: flex; flex-direction: column; gap: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+.config label input { margin-top: auto; }
+.config small { text-transform: none; letter-spacing: 0; opacity: .7; }
+
+input, textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 13px;
+  color: var(--fg);
+  font: 400 14px var(--body);
+}
+
+input:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+
+.actions { grid-column: 1 / -1; display: flex; gap: 10px; }
+
+button {
+  background: var(--blue);
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  padding: 11px 22px;
+  font: 600 14px var(--body);
+  cursor: pointer;
+}
+
+button.ghost { background: var(--card); color: var(--fg); border: 1px solid var(--border); }
+button:hover { filter: brightness(1.05); }
+button:disabled { opacity: .5; cursor: wait; }
+
+.filterbar { display: flex; gap: 14px; align-items: center; margin-top: 14px; }
+.filterbar input { flex: 1; }
+.status { font: 500 11px var(--mono); letter-spacing: .5px; color: var(--muted); white-space: nowrap; }
+.status.error { color: var(--red); }
+
+main { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+.speaker {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.posts { flex: 1; min-width: 340px; display: flex; flex-direction: column; gap: 16px; }
+.post h3 { font: 700 10px var(--mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
+.post-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+
+textarea { width: 100%; min-height: 200px; font: 400 13px/1.55 var(--body); resize: vertical; }
+
+.card-col { display: flex; flex-direction: column; gap: 14px; }
+.card-scroll { overflow: auto; }
+
+/* ---------- Locandina 600x600 (esportata a 1080x1080) ---------- */
+
+.card {
+  width: 600px;
+  height: 600px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  padding: 44px 40px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--bg);
+  background-image: var(--dots);
+  font-family: var(--body);
+  color: var(--fg);
+}
+
+.accent-bar {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 8px;
+  background: linear-gradient(90deg, var(--blue), var(--red) 34%, var(--yellow) 67%, var(--green));
+}
+
+.card .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+
+/* Occhiello con i quattro pallini, come sopra il titolo del sito */
+.eyebrow { display: flex; align-items: center; gap: 10px; font: 500 10px var(--mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.dots { display: flex; gap: 4px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; }
+.dots i:nth-child(1) { background: var(--blue); }
+.dots i:nth-child(2) { background: var(--red); }
+.dots i:nth-child(3) { background: var(--yellow); }
+.dots i:nth-child(4) { background: var(--green); }
+
+.brand { font-family: var(--display); font-size: 30px; font-weight: 800; letter-spacing: -1.1px; line-height: 1; }
+.brand .hl { color: var(--blue); }
+.brand .y1 { color: var(--blue); }
+.brand .y2 { color: var(--red); }
+.brand .y3 { color: var(--yellow); }
+.brand .y4 { color: var(--green); }
+
+/* Chip della sala, stessa forma dei chip "10 Ottobre 2026" / "Milano, Italia" */
+.chip-room {
+  flex-shrink: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font: 700 11px var(--mono);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--fg);
+  white-space: nowrap;
+}
+.chip-room:not(:empty)::before { content: '📍 '; }
+
+.content { display: flex; align-items: center; gap: 28px; }
+
+.avatar-container { width: 150px; height: 150px; flex-shrink: 0; }
+
+.avatar-frame {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: 3px solid var(--blue);
+  padding: 5px;
+  background: var(--bg);
+}
+
+.avatar-foto {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.avatar-initials {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: 3px solid var(--blue);
+  background: var(--soft);
+  color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  font: 800 50px var(--display);
+}
+
+.speaker-details { display: flex; flex-direction: column; min-width: 0; }
+.speaker-name { font-family: var(--display); font-size: 34px; font-weight: 800; letter-spacing: -1.2px; line-height: 1.1; }
+.speaker-role { font-size: 16px; font-weight: 500; color: var(--muted); margin-top: 8px; line-height: 1.35; }
+
+.talk-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px 24px;
+}
+
+.talk-label { font: 500 10px var(--mono); letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.talk-title { font-family: var(--display); font-size: 20px; font-weight: 700; letter-spacing: -.4px; line-height: 1.3; }
+
+.talk-tags { font: 700 14px var(--mono); letter-spacing: -.2px; color: var(--blue); min-height: 18px; }
+
+.card .footer {
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+
+.event-date { font: 500 12px var(--mono); letter-spacing: .4px; color: var(--muted); }
+.hashtag { font: 700 12px var(--mono); letter-spacing: .4px; color: var(--green); }
+
+/* Campi ritoccabili a mano prima dell'export. I segnaposto spariscono nel PNG. */
+.card [contenteditable]:hover { outline: 1px dashed #bdc1c6; outline-offset: 4px; }
+.card [contenteditable]:focus { outline: 2px solid var(--blue); outline-offset: 4px; }
+.card:not(.exporting) .chip-room:empty::after { content: '+ sala'; opacity: .6; }
+.card:not(.exporting) .talk-tags:empty::after { content: '+ hashtag'; opacity: .6; }
+.card.exporting .chip-room:empty,
+.card.exporting .talk-tags:empty { display: none; }
+.card.exporting [contenteditable] { outline: none; }
+
+/* Senza ANTHROPIC_API_KEY sul server i pulsanti AI non hanno senso */
+body.senza-ai .ai, body.senza-ai #ai-all { display: none; }
+.post-head span { display: flex; gap: 8px; }
+.post-head button { padding: 7px 14px; font-size: 12px; }
+
+/* Attese lunghe (una generazione AI e' ~25s): vanno viste, non intuite. */
+.status.in-corso::before {
+  content: '';
+  display: inline-block;
+  width: 11px; height: 11px;
+  margin-right: 7px;
+  vertical-align: -1px;
+  border: 2px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: gira .7s linear infinite;
+}
+
+@keyframes gira { to { transform: rotate(360deg); } }
+
+.speaker.occupato .posts { position: relative; }
+.speaker.occupato textarea { opacity: .45; }
+
+.speaker.occupato .posts::after {
+  content: '✨ Il modello sta scrivendo…';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 13px var(--body);
+  color: var(--fg);
+  background: linear-gradient(90deg, transparent, var(--card) 20%, var(--card) 80%, transparent);
+  animation: pulsa 1.4s ease-in-out infinite;
+}
+
+@keyframes pulsa { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+
+.speaker.occupato .ai, .speaker.occupato .copy { pointer-events: none; opacity: .5; }
+
+/* ---------- Pezzi della UI React ---------- */
+
+.errore { font: 500 12px var(--mono); color: var(--red); }
+
+.speaker.scheletro { min-height: 320px; opacity: .5; animation: pulsa 1.4s ease-in-out infinite; }
+
+.prompt {
+  margin-top: 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+
+.prompt summary { cursor: pointer; font: 700 11px var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.prompt textarea { margin-top: 12px; min-height: 220px; font: 400 12px/1.6 var(--mono); }
+.prompt-azioni { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.nota { font: 400 11px var(--mono); color: var(--muted); }
+
+/* Il select delle dimensioni vive tra i campi, quindi veste come un input */
+.config select {
+  margin-top: auto;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 13px;
+  color: var(--fg);
+  font: 400 14px var(--body);
+}
+
+.config select:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+
+/* L'input file non si puo' vestire: lo nascondo dentro una label-pulsante.
+   Il selettore deve reggere il confronto con ".config label", che altrimenti
+   vince e la fa uscire in mono maiuscolo come le etichette dei campi. */
+.config .importa {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 11px 22px;
+  font: 600 14px var(--body);
+  letter-spacing: normal;
+  text-transform: none;
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+
+.config .importa:hover { filter: brightness(1.05); }
+.config .importa input { display: none; }

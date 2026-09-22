@@ -1,0 +1,23 @@
+{
+  "name": "devfest-posts-generator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node dev.mjs",
+    "build": "vite build",
+    "server": "node --env-file-if-exists=.env server.mjs",
+    "vite": "vite",
+    "test": "node test.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.0",
+    "html2canvas": "^1.4.1",
+    "jszip": "^3.10.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "vite": "^7.0.0"
+  }
+}
