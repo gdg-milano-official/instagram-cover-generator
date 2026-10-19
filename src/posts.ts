@@ -1,8 +1,22 @@
 // Testi di partenza, generati da template. L'AI, quando c'e', li sostituisce.
 
-export const plainEvent = (cfg) => cfg.eventName.replace(/\*/g, '');
+import type { Speaker } from './sessionize.ts';
 
-export const instagramPost = (sp, cfg) => `🎤 SPEAKER ANNOUNCEMENT
+// Configurazione dell'evento, modificabile dalla barra in alto.
+export interface Cfg {
+  apiId: string;
+  eventName: string;
+  organizers: string;
+  place: string;
+  hashtag: string;
+  ticketUrl: string;
+}
+
+export interface Post { instagram: string; linkedin: string }
+
+export const plainEvent = (cfg: Pick<Cfg, 'eventName'>) => cfg.eventName.replace(/\*/g, '');
+
+export const instagramPost = (sp: Speaker, cfg: Cfg) => `🎤 SPEAKER ANNOUNCEMENT
 
 Diamo il benvenuto a ${sp.name} sul palco di ${plainEvent(cfg)}!
 ${sp.role}
@@ -14,7 +28,7 @@ ${sp.role}
 
 ${cfg.hashtag} #DevFest #GDG #GDGMilano #GoogleDevelopers #TechConference #DeveloperCommunity #Milano ${sp.tags}`;
 
-export const linkedinPost = (sp, cfg) => `👏 Un altro speaker confermato per ${plainEvent(cfg)}: ${sp.name}.
+export const linkedinPost = (sp: Speaker, cfg: Cfg) => `👏 Un altro speaker confermato per ${plainEvent(cfg)}: ${sp.name}.
 
 ${sp.role ? sp.role + '.\n\n' : ''}Sul palco porterà ${(sp.kind || 'Talk') === 'Workshop' ? 'il workshop' : 'il talk'} "${sp.talk}"${sp.room ? `, in ${sp.room}` : ''}.
 
@@ -26,7 +40,7 @@ ${plainEvent(cfg)} è la conferenza della community GDG: una giornata di talk te
 ${cfg.hashtag} #DevFest #GDG #GoogleDevelopers #TechCommunity ${sp.tags}`;
 
 // La chiave sta sul server: qui si passa solo il materiale grezzo di Sessionize.
-export async function generaConAI(sp, cfg, prompt) {
+export async function generaConAI(sp: Speaker, cfg: Cfg, prompt: string): Promise<Post> {
   const res = await fetch('/genera', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },

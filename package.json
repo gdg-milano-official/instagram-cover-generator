@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node dev.mjs",
-    "build": "vite build",
-    "server": "node --env-file-if-exists=.env server.mjs",
+    "dev": "node dev.ts",
+    "build": "tsc && vite build",
+    "server": "node --env-file-if-exists=.env server.ts",
     "vite": "vite",
-    "test": "node test.mjs"
+    "test": "node test.ts",
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.0",
@@ -17,7 +18,11 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^7.0.2",
     "vite": "^7.0.0"
   }
 }

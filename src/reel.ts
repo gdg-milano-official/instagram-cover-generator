@@ -3,7 +3,11 @@
 // e l'altra, come spostato a mano. Il tremolio e' deterministico: la stessa
 // posa esce uguale in anteprima e nel video. Il DOM serve solo a runtime.
 // Le scene sono le stesse per tutti; cosa cambia sta in PARTNER.
-import { plainEvent } from './posts.js';
+import { plainEvent } from './posts.ts';
+import type { Cfg } from './posts.ts';
+
+export type Ctx = CanvasRenderingContext2D;
+export type Disegno = (ctx: Ctx) => void;
 
 export const W = 1080;
 export const H = 1920;
@@ -19,10 +23,27 @@ export const DISPLAY = '"Bricolage Grotesque", system-ui, sans-serif';
 export const BODY = '"Hanken Grotesk", system-ui, sans-serif';
 export const MONO = '"JetBrains Mono", ui-monospace, monospace';
 
+export interface TestiPartner {
+  kicker: string; claim: string; titolo: string;
+  punto1: string; punto2: string; punto3: string;
+  cta: string; ctaSub: string; data: string;
+}
+
+export interface Partner {
+  nome: string;
+  asset: string;
+  logo: { file: string; ratio: number; simbolo: number[]; perno: number[]; gradi: number[] };
+  immagini: string[];
+  cornice: 'telefono' | 'foto';
+  colori: { ink: string; accento: string; postit: string[] };
+  testi: TestiPartner;
+  caption: (cfg: Cfg) => string;
+}
+
 // logo: SVG con le proporzioni del viewBox e il riquadro del simbolo che si
 // anima da solo (frazioni del logo), col perno della rotazione nel riquadro.
 // cornice: 'telefono' per le schermate dell'app, 'foto' per immagini qualsiasi.
-export const PARTNER = {
+export const PARTNER: Record<string, Partner> = {
   bizzynow: {
     nome: 'BizzyNow',
     asset: '/partner/bizzynow',
@@ -83,13 +104,16 @@ ${cfg.hashtag} #DevFest #GDG #Datwave #GoogleCloud #AgenticAI`
 /* ---------- Tempi ---------- */
 
 // Rumore deterministico in [0, 1).
-export const rnd = (n) => { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); };
-const tremolio = (f, id, amp) => (rnd(f * 131 + id * 7.13) - 0.5) * 2 * amp;
-const backOut = (t) => 1 + 2.7 * (t - 1) ** 3 + 1.7 * (t - 1) ** 2;
+export const rnd = (n: number) => { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); };
+const tremolio = (f: number, id: number, amp: number) => (rnd(f * 131 + id * 7.13) - 0.5) * 2 * amp;
+const backOut = (t: number) => 1 + 2.7 * (t - 1) ** 3 + 1.7 * (t - 1) ** 2;
 
 // Spostamento del pezzo al fotogramma f, o null se non e' in scena. Entra da
 // `da` in `dur` scatti con un piccolo rimbalzo, esce verso `a` da `out`.
-export function posa(f, { in: inizio, out = Infinity, da = [0, 0], a = [-1400, 0], dur = 4 }) {
+// Senza `in` il pezzo e' gia' in posa: le immagini statiche.
+export interface Tempi { in?: number; out?: number; da?: number[]; a?: number[]; dur?: number }
+
+export function posa(f: number, { in: inizio = -Infinity, out = Infinity, da = [0, 0], a = [-1400, 0], dur = 4 }: Tempi): [number, number] | null {
   if (f < inizio || f >= out + dur) return null;
   let dx = 0, dy = 0;
   if (f < inizio + dur) {
@@ -105,14 +129,14 @@ export function posa(f, { in: inizio, out = Infinity, da = [0, 0], a = [-1400, 0
 
 /* ---------- Asset ---------- */
 
-export const carica = (src) => new Promise((ok, ko) => {
+export const carica = (src: string) => new Promise<HTMLImageElement>((ok, ko) => {
   const img = new Image();
   img.onload = () => ok(img);
   img.onerror = () => ko(new Error(`immagine mancante: ${src}`));
   img.src = src;
 });
 
-export function tela(w, h) {
+export function tela(w: number, h: number) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   return c;
@@ -130,11 +154,11 @@ export const caricaFont = () => Promise.all([
 
 // Grana della carta: piu' grande del fotogramma, la sposto a ogni posa.
 // Una sola per pagina, costa qualche decina di millisecondi.
-let granaPronta;
+let granaPronta: HTMLCanvasElement | undefined;
 export function grana() {
   if (granaPronta) return granaPronta;
   granaPronta = tela(W + 40, H + 40);
-  const g = granaPronta.getContext('2d');
+  const g = granaPronta.getContext('2d')!;
   for (let i = 0; i < 26000; i++) {
     g.fillStyle = `rgba(${rnd(i) > 0.5 ? '60,45,20' : '255,255,255'},${0.04 + rnd(i + 0.5) * 0.08})`;
     g.fillRect(rnd(i + 0.1) * (W + 40), rnd(i + 0.2) * (H + 40), 1 + rnd(i + 0.3) * 2.5, 1 + rnd(i + 0.4) * 2.5);
@@ -142,7 +166,9 @@ export function grana() {
   return granaPronta;
 }
 
-export async function preparaAsset(partner) {
+export type Asset = Awaited<ReturnType<typeof preparaAsset>>;
+
+export async function preparaAsset(partner: Partner) {
   await caricaFont();
   const { asset, logo: l } = partner;
   const [svg, ...immagini] = await Promise.all(
@@ -150,11 +176,11 @@ export async function preparaAsset(partner) {
 
   const lh = Math.round(LOGO_W / l.ratio);
   const base = tela(LOGO_W, lh);
-  const b = base.getContext('2d');
+  const b = base.getContext('2d')!;
   b.drawImage(svg, 0, 0, LOGO_W, lh);
   const [x0, y0, x1, y1] = [l.simbolo[0] * LOGO_W, l.simbolo[1] * lh, l.simbolo[2] * LOGO_W, l.simbolo[3] * lh].map(Math.round);
   const simbolo = tela(x1 - x0, y1 - y0);
-  simbolo.getContext('2d').drawImage(base, x0, y0, x1 - x0, y1 - y0, 0, 0, x1 - x0, y1 - y0);
+  simbolo.getContext('2d')!.drawImage(base, x0, y0, x1 - x0, y1 - y0, 0, 0, x1 - x0, y1 - y0);
   b.clearRect(x0, y0, x1 - x0, y1 - y0);
 
   return { partner, base, simbolo, riquadro: [x0, y0], immagini, grana: grana() };
@@ -162,7 +188,9 @@ export async function preparaAsset(partner) {
 
 /* ---------- Primitive di carta ---------- */
 
-export function pezzo(ctx, f, id, { x, y, rot = 0, scala = 1, ...tempi }, disegna) {
+export interface Pezzo extends Tempi { x: number; y: number; rot?: number; scala?: number }
+
+export function pezzo(ctx: Ctx, f: number, id: number, { x, y, rot = 0, scala = 1, ...tempi }: Pezzo, disegna: Disegno) {
   const p = posa(f, tempi);
   if (!p) return;
   ctx.save();
@@ -173,7 +201,7 @@ export function pezzo(ctx, f, id, { x, y, rot = 0, scala = 1, ...tempi }, disegn
   ctx.restore();
 }
 
-export function carta(ctx, w, h, colore = '#fff', r = 8) {
+export function carta(ctx: Ctx, w: number, h: number, colore = '#fff', r = 8) {
   ctx.save();
   ctx.shadowColor = 'rgba(40,30,10,.3)';
   ctx.shadowBlur = 20;
@@ -187,7 +215,7 @@ export function carta(ctx, w, h, colore = '#fff', r = 8) {
 }
 
 // Nastro adesivo semitrasparente sopra un pezzo.
-export function nastro(ctx, x, y, rot = -8) {
+export function nastro(ctx: Ctx, x: number, y: number, rot = -8) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate((rot * Math.PI) / 180);
@@ -196,8 +224,8 @@ export function nastro(ctx, x, y, rot = -8) {
   ctx.restore();
 }
 
-export function righe(ctx, s, maxW) {
-  const out = [];
+export function righe(ctx: Ctx, s: string, maxW: number) {
+  const out: string[] = [];
   for (const par of String(s).split('\n')) {
     let riga = '';
     for (const parola of par.split(' ')) {
@@ -210,7 +238,9 @@ export function righe(ctx, s, maxW) {
 }
 
 // Testo centrato sull'origine, a capo entro maxW.
-export function scritta(ctx, s, { size, weight = 800, font = DISPLAY, color = C.ink, maxW = 900, lh = 1.12 }) {
+export interface Stile { size: number; weight?: number; font?: string; color?: string; maxW?: number; lh?: number; colore?: string }
+
+export function scritta(ctx: Ctx, s: string, { size, weight = 800, font = DISPLAY, color = C.ink, maxW = 900, lh = 1.12 }: Stile) {
   ctx.font = `${weight} ${size}px ${font}`;
   ctx.fillStyle = color;
   ctx.textAlign = 'center';
@@ -221,7 +251,7 @@ export function scritta(ctx, s, { size, weight = 800, font = DISPLAY, color = C.
 }
 
 // Striscia di carta ritagliata attorno a un testo.
-export function striscia(ctx, s, { size, colore = '#fff', color = C.ink, font = DISPLAY, weight = 800, maxW = 900 }) {
+export function striscia(ctx: Ctx, s: string, { size, colore = '#fff', color = C.ink, font = DISPLAY, weight = 800, maxW = 900 }: Stile) {
   ctx.font = `${weight} ${size}px ${font}`;
   const r = righe(ctx, s, maxW);
   const w = Math.max(...r.map((t) => ctx.measureText(t).width)) + size * 0.9;
@@ -231,7 +261,7 @@ export function striscia(ctx, s, { size, colore = '#fff', color = C.ink, font = 
 }
 
 // Logo del partner largo `w`: il simbolo oscilla attorno al perno quando `anima`.
-function logo(ctx, a, w, f, anima) {
+function logo(ctx: Ctx, a: Asset, w: number, f: number, anima: boolean) {
   const { perno, gradi } = a.partner.logo;
   const s = w / LOGO_W;
   const h = a.base.height * s;
@@ -246,7 +276,7 @@ function logo(ctx, a, w, f, anima) {
 
 /* ---------- Fotogramma ---------- */
 
-export function sfondo(ctx, f, a, w = W, h = H) {
+export function sfondo(ctx: Ctx, f: number, a: { grana: HTMLCanvasElement }, w = W, h = H) {
   ctx.fillStyle = C.paper;
   ctx.fillRect(0, 0, w, h);
   ctx.drawImage(a.grana, -Math.floor(rnd(f) * 40), -Math.floor(rnd(f + 1) * 40));
@@ -261,7 +291,7 @@ export function sfondo(ctx, f, a, w = W, h = H) {
 }
 
 // Scena 1 (0-3s): i quattro pallini e il nome dell'evento a lettere ritagliate.
-function scenaEvento(ctx, f, cfg) {
+function scenaEvento(ctx: Ctx, f: number, cfg: Cfg) {
   const out = 36;
   GOOGLE.forEach((colore, i) => pezzo(ctx, f, 10 + i,
     { x: 405 + i * 90, y: 560, in: 1 + i * 2, da: [0, -700], out: out + (i % 2) }, (c) => {
@@ -296,7 +326,7 @@ function scenaEvento(ctx, f, cfg) {
 }
 
 // Scena 2 (3,5-7s): post-it, logo col simbolo che si muove, claim.
-function scenaPartner(ctx, f, a, t) {
+function scenaPartner(ctx: Ctx, f: number, a: Asset, t: TestiPartner) {
   const { colori } = a.partner;
   const out = 80;
   pezzo(ctx, f, 400, { x: W / 2, y: 700, rot: -5, in: 40, da: [0, -900], out }, (c) => {
@@ -315,7 +345,7 @@ function scenaPartner(ctx, f, a, t) {
 }
 
 // Il telefono con la schermata dell'app, o una polaroid con l'immagine dentro.
-function cornice(c, a, img) {
+function cornice(c: Ctx, a: Asset, img: HTMLImageElement) {
   c.save();
   c.shadowColor = 'rgba(40,30,10,.35)'; c.shadowBlur = 30; c.shadowOffsetX = 8; c.shadowOffsetY = 16;
   if (a.partner.cornice === 'telefono') {
@@ -332,7 +362,7 @@ function cornice(c, a, img) {
 }
 
 // Scena 3 (7-12s): telefono o polaroid che cambia immagine, un post-it per punto.
-function scenaDettagli(ctx, f, a, t) {
+function scenaDettagli(ctx: Ctx, f: number, a: Asset, t: TestiPartner) {
   const { colori } = a.partner;
   const out = 144;
   pezzo(ctx, f, 500, { x: W / 2, y: 380, rot: -1, in: 84, da: [0, -500], out }, (c) =>
@@ -347,7 +377,7 @@ function scenaDettagli(ctx, f, a, t) {
     in: 86, da: [0, 1400], dur: 5, out
   }, (c) => cornice(c, a, a.immagini[quale]));
 
-  [[t.punto1, 94, 4], [t.punto2, 108, -4], [t.punto3, 128, 3]]
+  ([[t.punto1, 94, 4], [t.punto2, 108, -4], [t.punto3, 128, 3]] as const)
     .forEach(([testo, inizio, rot], i) =>
       pezzo(ctx, f, 510 + i, { x: 800, y: 640 + i * 320, rot, in: inizio, da: [700, 0], out: out + i }, (c) => {
         carta(c, 420, 270, colori.postit[i], 2);
@@ -357,12 +387,12 @@ function scenaDettagli(ctx, f, a, t) {
 }
 
 // Scena 4 (12-16s): DevFest × partner e l'invito finale.
-function scenaCta(ctx, f, a, t, cfg) {
+function scenaCta(ctx: Ctx, f: number, a: Asset, t: TestiPartner, cfg: Cfg) {
   const { colori } = a.partner;
   pezzo(ctx, f, 600, { x: W / 2, y: 520, rot: -2, in: 148, da: [-1300, 0] }, (c) => {
     carta(c, 820, 140, '#fff', 6);
     const nome = plainEvent(cfg);
-    const [testo, anno] = nome.match(/^(.*?)\s*(\d{4})?$/).slice(1);
+    const [testo, anno] = nome.match(/^(.*?)\s*(\d{4})?$/)!.slice(1);
     c.font = `800 72px ${DISPLAY}`;
     const wt = c.measureText(testo).width, wa = anno ? c.measureText(` ${anno}`).width : 0;
     c.textBaseline = 'middle';
@@ -392,7 +422,7 @@ function scenaCta(ctx, f, a, t, cfg) {
 }
 
 // `a` viene da preparaAsset(partner) e si porta dietro il partner.
-export function disegnaReel(ctx, f, a, testi, cfg) {
+export function disegnaReel(ctx: Ctx, f: number, a: Asset, testi: TestiPartner, cfg: Cfg) {
   sfondo(ctx, f, a);
   scenaEvento(ctx, f, cfg);
   scenaPartner(ctx, f, a, testi);
@@ -409,27 +439,32 @@ export const formatoVideo = (audio = false) => (audio ? FORMATI_AUDIO : FORMATI)
 // MediaRecorder registra in tempo reale: ridisegno la posa corrente a ogni
 // frame del browser, cosi' il video esce a frequenza costante con le pose a 12 fps.
 // `suono(actx, dest, t0)`, se c'e', programma l'audio da mixare nel video.
-export async function registraReel(canvas, disegna, onProgress, frames = FRAMES, suono) {
+export type Suono = (actx: AudioContext, dest: MediaStreamAudioDestinationNode, t0: number) => void;
+
+export async function registraReel(
+  canvas: HTMLCanvasElement, disegna: (f: number) => void, onProgress?: (f: number, n: number) => void,
+  frames = FRAMES, suono?: Suono
+) {
   const tipo = formatoVideo(Boolean(suono));
   if (!tipo) throw new Error('questo browser non sa registrare video dal canvas');
   const stream = canvas.captureStream(30);
-  const actx = suono && new AudioContext();
-  let dest;
+  const actx = suono ? new AudioContext() : undefined;
+  let dest: MediaStreamAudioDestinationNode | undefined;
   if (actx) {
     await actx.resume();
     dest = actx.createMediaStreamDestination();
     dest.stream.getAudioTracks().forEach((tr) => stream.addTrack(tr));
   }
   const rec = new MediaRecorder(stream, { mimeType: tipo, videoBitsPerSecond: 16_000_000 });
-  const pezzi = [];
-  rec.ondataavailable = (e) => e.data.size && pezzi.push(e.data);
+  const pezzi: Blob[] = [];
+  rec.ondataavailable = (e) => { if (e.data.size) pezzi.push(e.data); };
   const fermo = new Promise((ok) => (rec.onstop = ok));
 
   disegna(0);
   rec.start();
-  suono?.(actx, dest, actx.currentTime);
+  if (suono && actx && dest) suono(actx, dest, actx.currentTime);
   const t0 = performance.now();
-  await new Promise((fine) => {
+  await new Promise<void>((fine) => {
     let ultimo = -1;
     const passo = () => {
       const f = Math.floor(((performance.now() - t0) * FPS) / 1000);

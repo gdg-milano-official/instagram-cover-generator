@@ -2,6 +2,7 @@
 // Il proxy serve per la CORS e perche' le foto devono arrivare same-origin,
 // altrimenti html2canvas sporca il canvas e l'export PNG fallisce.
 import { createServer } from 'node:http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,7 +20,7 @@ const API_KEY = env.AI_API_KEY || env.AZURE_AI_FOUNDRY_API_KEY || '';
 const MODEL = env.AI_MODEL || env.AZURE_AI_FOUNDRY_MODEL || '';
 const AI = Boolean(ENDPOINT && API_KEY && MODEL);
 
-const TIPI = {
+const TIPI: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -29,7 +30,7 @@ const TIPI = {
   '.ico': 'image/x-icon'
 };
 
-const json = (res, code, data) => {
+const json = (res: ServerResponse, code: number, data: unknown) => {
   res.writeHead(code, { 'content-type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(data));
 };
@@ -67,7 +68,7 @@ Rispondi SOLO con un oggetto JSON con esattamente due chiavi:
 {"instagram": "<il post>", "linkedin": "<il post>"}`;
 
 // Alcuni endpoint incartano il JSON in un blocco markdown anche quando non dovrebbero.
-function estraiJson(testo) {
+function estraiJson(testo: string) {
   const pulito = testo.trim().replace(/^```(?:json)?/, '').replace(/```$/, '').trim();
   try {
     return JSON.parse(pulito);
@@ -78,7 +79,7 @@ function estraiJson(testo) {
   }
 }
 
-async function generaPost({ prompt, ...dati }) {
+async function generaPost({ prompt, ...dati }: { prompt?: unknown; [campo: string]: unknown }) {
   // Il prompt puo' arrivare dalla UI; se manca o e' vuoto uso quello di casa.
   const sistema = typeof prompt === 'string' && prompt.trim() ? prompt.trim().slice(0, 20_000) : SYSTEM;
   const risposta = await fetch(ENDPOINT, {
@@ -113,10 +114,10 @@ async function generaPost({ prompt, ...dati }) {
   return { instagram: post.instagram, linkedin: post.linkedin };
 }
 
-function leggiCorpo(req) {
-  return new Promise((resolve, reject) => {
+function leggiCorpo(req: IncomingMessage) {
+  return new Promise<string>((resolve, reject) => {
     let corpo = '';
-    req.on('data', (c) => {
+    req.on('data', (c: Buffer) => {
       corpo += c;
       if (corpo.length > 100_000) reject(new Error('richiesta troppo grande'));  // limite di sanita'
     });
@@ -127,7 +128,7 @@ function leggiCorpo(req) {
 
 /* ---------- Proxy e statici ---------- */
 
-async function proxy(destinazione, res) {
+async function proxy(destinazione: string, res: ServerResponse) {
   const upstream = await fetch(destinazione, {
     redirect: 'follow',
     signal: AbortSignal.timeout(20_000)
@@ -139,7 +140,7 @@ async function proxy(destinazione, res) {
   res.end(Buffer.from(await upstream.arrayBuffer()));
 }
 
-async function statico(percorso, res) {
+async function statico(percorso: string, res: ServerResponse): Promise<void> {
   // normalize + prefisso: senza questo un ../ servirebbe file fuori da public/
   const rel = normalize(decodeURIComponent(percorso)).replace(/^(\.\.(\/|\\|$))+/, '');
   const file = join(PUBLIC, rel === '/' || rel === '' ? 'index.html' : rel);
@@ -157,7 +158,7 @@ async function statico(percorso, res) {
 }
 
 const server = createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
+  const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
   try {
     if (url.pathname === '/stato') return json(res, 200, { ai: AI, promptDefault: SYSTEM });
 
@@ -174,15 +175,16 @@ const server = createServer(async (req, res) => {
       return await proxy('https://cdn.sessionize.com/image/' + url.pathname.slice(5), res);
 
     await statico(url.pathname, res);
-  } catch (err) {
-    console.error(err);
-    const rete = ['ETIMEDOUT', 'ENOTFOUND', 'ENETUNREACH', 'ECONNREFUSED'].includes(err.cause?.code)
+  } catch (e) {
+    console.error(e);
+    const err = e as Error & { cause?: { code?: string } };
+    const rete = ['ETIMEDOUT', 'ENOTFOUND', 'ENETUNREACH', 'ECONNREFUSED'].includes(err.cause?.code ?? '')
       || err.name === 'TimeoutError';
     json(res, rete ? 502 : 500, { errore: rete ? `upstream non raggiungibile: ${err.message}` : err.message });
   }
 });
 
-server.on('error', (err) => {
+server.on('error', (err: NodeJS.ErrnoException) => {
   if (err.code === 'EADDRINUSE') {
     console.error(`La porta ${PORT} e' gia' occupata. Avvia con PORT=<altra> oppure libera quella porta.`);
     process.exit(1);

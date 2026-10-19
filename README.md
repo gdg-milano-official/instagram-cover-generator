@@ -18,7 +18,7 @@ npm run dev      # http://localhost:5173
 ```
 
 Avvia Vite (hot reload della UI, React Fast Refresh) e il server Node in
-`--watch` sulla 8091, che si riavvia da solo quando salvi `server.mjs`. Vite gli
+`--watch` sulla 8091, che si riavvia da solo quando salvi `server.ts`. Vite gli
 gira `/api`, `/img`, `/genera` e `/stato`. Con `PORT=...` cambi la porta del
 backend; la 8080 di default in Docker in locale e' spesso gia' occupata.
 
@@ -60,7 +60,7 @@ storia (1080×1920), post (1080×1350), carosello di 4 slide (1080×1350), reel 
 stop motion da 12 secondi (la carta arriva coperta e si gira) e caption.
 
 1. Le carte stanno in una cartella di PNG chiamati `NN.Nome_Cognome (...).png`.
-   `node scripts/carte.mjs "<cartella>"` le abbina agli speaker e scrive
+   `node scripts/carte.ts "<cartella>"` le abbina agli speaker e scrive
    `public/carte/speaker.json` piu' le carte in JPG. Gli speaker e i talk li
    legge dall'agenda di 2026.devfestmilano.it, che e' sincronizzata con Sessionize.
    Nickname e nomi scritti diversamente sulla carta stanno in `ALIAS` e
@@ -95,7 +95,7 @@ dall'anagrafica (vedi sotto), e si abbinano allo stesso modo.
 Finche' ci sono carte caricate, i kit usano quelle al posto di `public/carte/`:
 **🃏 Con la carta** esce per gli speaker collegati, e organizzatori, sponsor e carte
 libere diventano le "altre carte" (sottotitolo e caption dal loro gruppo; per le
-libere decide il nome, `GRUPPI` in `src/carte.js`). Il kit organizzatori prende la
+libere decide il nome, `GRUPPI` in `src/carte.ts`). Il kit organizzatori prende la
 carta abbinata qui.
 
 ### Organizzatori e sponsor
@@ -103,10 +103,10 @@ carta abbinata qui.
 La sezione **👥 Organizzatori e sponsor** (`/organizzatori-sponsor`) e' l'anagrafica:
 per gli organizzatori nome, ruolo (il GDG), lavoro e foto, per gli sponsor nome e
 sottotitolo. Si aggiunge, si modifica e si toglie dalla pagina. Finche' non la tocchi
-viene da `public/carte/team.json` e dai partner di `src/reel.js`; alla prima modifica
+viene da `public/carte/team.json` e dai partner di `src/reel.ts`; alla prima modifica
 resta nel localStorage (foto comprese, ridotte a 600 px) e **↺ Ripristina** torna ai
 dati di partenza. La usano Carica carte e il kit organizzatori; il kit sponsors resta
-su `PARTNER` in `src/reel.js`, perche' logo, immagini e colori non stanno in un form.
+su `PARTNER` in `src/reel.ts`, perche' logo, immagini e colori non stanno in un form.
 Le immagini restano solo nella scheda; gli abbinamenti fatti a mano stanno nel
 localStorage per nome di file, quindi ricaricando la stessa cartella tornano al loro posto.
 
@@ -135,7 +135,7 @@ con le immagini del partner accanto a tre post-it, invito finale.
   registrano dal canvas con `MediaRecorder` in tempo reale (MP4 su Chrome e
   Safari recenti, altrimenti WebM): tieni la scheda in primo piano.
 - Il video e' muto: la musica si aggiunge su Instagram.
-- **Aggiungere un partner**: una voce in `PARTNER` (`src/reel.js`) con logo SVG,
+- **Aggiungere un partner**: una voce in `PARTNER` (`src/reel.ts`) con logo SVG,
   riquadro del simbolo, tre immagini, colori, testi e caption; gli asset in
   `public/partner/<id>/`.
 - Loghi, schermate e badge in `public/partner/` vengono dai siti dei partner
@@ -149,7 +149,7 @@ con la carta BizzyMagic o con la foto della pagina team del sito. Le persone
 vengono dall'anagrafica **👥 Organizzatori e sponsor**; la carta e' quella abbinata
 in Carica carte o, se manca, quella di `team.json`.
 
-`node scripts/team.mjs` legge nome, GDG e lavoro da 2026.devfestmilano.it/it/team/,
+`node scripts/team.ts` legge nome, GDG e lavoro da 2026.devfestmilano.it/it/team/,
 scarica le foto in `public/carte/team-*.jpg` e abbina le carte per nome da
 `public/carte/altre.json`; scrive `public/carte/team.json`. I testi non dicono
 "ci vediamo sabato" e non rimandano ai biglietti, cosi' il kit va bene anche
@@ -163,7 +163,7 @@ dopo l'evento.
 | Titolo | sessione confermata |
 | Talk o Workshop | dedotto da sala e durata: Sessionize non lo marca |
 | Sala | `rooms[]` + `session.roomId`, cioe' la schedule pubblicata |
-| Hashtag argomento | dedotti da titolo + abstract (`TOPIC_TAGS` in `src/sessionize.js`) |
+| Hashtag argomento | dedotti da titolo + abstract (`TOPIC_TAGS` in `src/sessionize.ts`) |
 
 Vengono restituiti solo gli speaker pubblicati, e l'app scarta le sessioni con
 `isConfirmed: false`: in lista restano solo i confermati.
@@ -191,11 +191,15 @@ resta nel localStorage e si ripristina con un pulsante.
 
 ## Struttura
 
-- `src/` — UI React (Vite). `sessionize.js` mapping dei dati, `posts.js` template
-  e chiamata a `/genera`, `export.js` PNG/ZIP/Word, `Card.jsx` la locandina.
-- `server.mjs` — un solo processo Node senza dipendenze: serve `dist/`, fa da
+- `src/` — UI React (Vite). `sessionize.ts` mapping dei dati, `posts.ts` template
+  e chiamata a `/genera`, `export.ts` PNG/ZIP/Word, `Card.tsx` la locandina.
+- `server.ts` — un solo processo Node senza dipendenze: serve `dist/`, fa da
   proxy verso Sessionize e parla col provider AI.
-- `test.mjs` — `npm test`, copre il mapping del payload Sessionize.
+- `test.ts` — `npm test`, copre il mapping del payload Sessionize.
+
+Tutto e' TypeScript: `npm run typecheck` controlla i tipi (lo fa anche `npm run build`).
+Server, script e test girano con `node file.ts` grazie al type stripping di Node
+(22.18+), quindi niente passo di compilazione lato server.
 
 Il proxy non e' decorativo: le foto devono arrivare same-origin, altrimenti
 html2canvas sporca il canvas e l'export PNG fallisce.

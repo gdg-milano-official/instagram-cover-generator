@@ -1,57 +1,65 @@
 // Kit social degli organizzatori: per ognuno storia, post, carosello, reel e
 // caption, con la carta BizzyMagic o con la foto del sito (modo 'foto'). Gli
-// organizzatori vengono dall'anagrafica (Persone.jsx, di partenza team.json di
-// scripts/team.mjs) con la carta di Carica carte; il disegno e' in carte.js.
+// organizzatori vengono dall'anagrafica (Persone.tsx, di partenza team.json di
+// scripts/team.ts) con la carta di Carica carte; il disegno e' in carte.ts.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import JSZip from 'jszip';
-import { FPS, registraReel } from './reel.js';
-import { FRAMES_CARTA, LATO, SLIDE, captionTeam, disegnaCaroselloTeam, disegnaPostTeam, disegnaReelCarta, disegnaStoriaTeam, preparaCarta } from './carte.js';
-import { save, slug } from './export.js';
-import { plainEvent } from './posts.js';
+import type JSZipT from 'jszip';
+import { FPS, registraReel } from './reel.ts';
+import { FRAMES_CARTA, LATO, SLIDE, captionTeam, disegnaCaroselloTeam, disegnaPostTeam, disegnaReelCarta, disegnaStoriaTeam, preparaCarta } from './carte.ts';
+import { save, slug } from './export.ts';
+import type { Immagine, Modo, Soggetto } from './carte.ts';
+import { plainEvent } from './posts.ts';
+import type { Cfg } from './posts.ts';
 
-const IMMAGINI = [
+const IMMAGINI: Immagine[] = [
   ['storia', 'storia', disegnaStoriaTeam],
   ['post', 'post', disegnaPostTeam],
   ...Array.from({ length: SLIDE }, (_, i) =>
-    [`carosello-${i + 1}`, 'carosello', (c, a, sp, cfg) => disegnaCaroselloTeam(c, i, a, sp, cfg)])
+    [`carosello-${i + 1}`, 'carosello', (c, a, sp, cfg) => disegnaCaroselloTeam(c, i, a, sp, cfg)] satisfies Immagine)
 ];
 
-const cartella = (sp, modo) => (modo === 'carta' && sp.numero ? `${sp.numero.slice(0, 3)}-${slug(sp.name)}` : slug(sp.name));
+const cartella = (sp: Soggetto, modo: Modo) => (modo === 'carta' && sp.numero ? `${sp.numero.slice(0, 3)}-${slug(sp.name)}` : slug(sp.name));
 
-function tela(formato) {
+function tela(formato: Immagine[1]) {
   const c = document.createElement('canvas');
   [c.width, c.height] = LATO[formato];
   return c;
 }
 
-const jpg = (canvas) => new Promise((ok) => canvas.toBlob(ok, 'image/jpeg', 0.92));
+const jpg = (canvas: HTMLCanvasElement) => new Promise<Blob>((ok) => canvas.toBlob((b) => ok(b!), 'image/jpeg', 0.92));
 
-async function immagini(sp, cfg, modo, scala = 1) {
+// A grandezza piena il canvas, per lo ZIP; rimpicciolita la miniatura.
+interface Uscita { nome: string; canvas?: HTMLCanvasElement; src?: string }
+
+async function immagini(sp: Soggetto, cfg: Cfg, modo: Modo, scala = 1) {
   const a = await preparaCarta(sp, modo);
-  const out = [];
+  const out: Uscita[] = [];
   for (const [nome, formato, disegna] of IMMAGINI) {
     const grande = tela(formato);
-    disegna(grande.getContext('2d'), a, sp, cfg);
+    disegna(grande.getContext('2d')!, a, sp, cfg);
     if (scala === 1) { out.push({ nome, canvas: grande }); continue; }
     const piccola = document.createElement('canvas');
     piccola.width = grande.width * scala;
     piccola.height = grande.height * scala;
-    piccola.getContext('2d').drawImage(grande, 0, 0, piccola.width, piccola.height);
+    piccola.getContext('2d')!.drawImage(grande, 0, 0, piccola.width, piccola.height);
     out.push({ nome, src: piccola.toDataURL('image/jpeg', 0.85) });
     await new Promise((r) => setTimeout(r));   // lascia respirare la pagina
   }
   return out;
 }
 
-async function aggiungiImmagini(zip, sp, cfg, modo, caption) {
-  const dir = zip.folder(cartella(sp, modo));
-  for (const { nome, canvas } of await immagini(sp, cfg, modo)) dir.file(`${nome}.jpg`, await jpg(canvas));
+async function aggiungiImmagini(zip: JSZipT, sp: Soggetto, cfg: Cfg, modo: Modo, caption: string) {
+  const dir = zip.folder(cartella(sp, modo))!;
+  for (const { nome, canvas } of await immagini(sp, cfg, modo)) dir.file(`${nome}.jpg`, await jpg(canvas!));
   dir.file('caption.txt', caption);
 }
 
-function Organizzatore({ sp, cfg, modo, caption, onCaption, onReel, occupato }) {
-  const [miniature, setMiniature] = useState([]);
+function Organizzatore({ sp, cfg, modo, caption, onCaption, onReel, occupato }: {
+  sp: Soggetto; cfg: Cfg; modo: Modo; caption: string; onCaption: (v: string) => void; onReel: () => void; occupato: boolean;
+}) {
+  const [miniature, setMiniature] = useState<Uscita[]>([]);
   useEffect(() => {
     let attivo = true;
     immagini(sp, cfg, modo, 1 / 4).then((m) => attivo && setMiniature(m));
@@ -111,27 +119,30 @@ function Organizzatore({ sp, cfg, modo, caption, onCaption, onReel, occupato }) 
 
 // `modo` arriva dal percorso: /kit-social-organizzatori/carta o /foto.
 // `team` e' l'anagrafica con le carte caricate gia' abbinate (kitCaricato).
-export default function Team({ cfg, team, modo, onModo }) {
-  const [captions, setCaptions] = useState({});
+export default function Team({ cfg, team, modo, onModo }: {
+  cfg: Cfg; team: Soggetto[]; modo: Modo; onModo: (m: Modo) => void;
+}) {
+  const [captions, setCaptions] = useState<Record<string, string>>({});
   const [avanzamento, setAvanzamento] = useState('');
-  const [inScena, setInScena] = useState(null);
-  const canvas = useRef(null);
+  const [inScena, setInScena] = useState<Soggetto | null>(null);
+  const canvas = useRef<HTMLCanvasElement>(null);
   const conCarta = modo === 'carta';
   // con la foto il numero della carta non c'entra
   const elenco = useMemo(() => team.filter((sp) => sp.name && (conCarta ? sp.carta : sp.foto))
     .map((sp) => (conCarta ? sp : { ...sp, numero: '' })), [team, conCarta]);
-  const captionDi = (sp) => captions[`${modo}:${sp.id}`] ?? captionTeam(sp, cfg, conCarta);
+  const captionDi = (sp: Soggetto) => captions[`${modo}:${sp.id}`] ?? captionTeam(sp, cfg, conCarta);
 
   // MediaRecorder vuole un canvas visibile che si aggiorna.
-  async function reel(sp) {
+  async function reel(sp: Soggetto) {
     setInScena(sp);
     const a = await preparaCarta(sp, modo);
-    return registraReel(canvas.current, (f) => disegnaReelCarta(canvas.current.getContext('2d'), f, a, sp, cfg),
+    const tela = canvas.current!;
+    return registraReel(tela, (f) => disegnaReelCarta(tela.getContext('2d')!, f, a, sp, cfg),
       (f, n) => setAvanzamento(`Reel di ${sp.name}: ${Math.ceil(f / FPS)}/${n / FPS} s…`), FRAMES_CARTA);
   }
 
   const unReel = useMutation({
-    mutationFn: async (sp) => {
+    mutationFn: async (sp: Soggetto) => {
       const { blob, estensione } = await reel(sp);
       save(blob, `${cartella(sp, modo)}-reel.${estensione}`);
     },
@@ -141,14 +152,14 @@ export default function Team({ cfg, team, modo, onModo }) {
 
   // Un solo ZIP; con `conReel` registra anche i reel, in tempo reale.
   const zip = useMutation({
-    mutationFn: async (conReel) => {
+    mutationFn: async (conReel: boolean) => {
       const z = new JSZip();
       for (const [i, sp] of elenco.entries()) {
         setAvanzamento(`Organizzatore ${i + 1}/${elenco.length}: ${sp.name}…`);
         await aggiungiImmagini(z, sp, cfg, modo, captionDi(sp));
         if (conReel) {
           const { blob, estensione } = await reel(sp);
-          z.folder(cartella(sp, modo)).file(`reel.${estensione}`, blob);
+          z.folder(cartella(sp, modo))!.file(`reel.${estensione}`, blob);
         }
       }
       setAvanzamento('Comprimo lo ZIP…');
@@ -164,7 +175,7 @@ export default function Team({ cfg, team, modo, onModo }) {
   return (
     <>
       <nav className="sottosezioni">
-        {[['carta', '🃏 Con la carta'], ['foto', '📸 Con la foto']].map(([id, etichetta]) => (
+        {([['carta', '🃏 Con la carta'], ['foto', '📸 Con la foto']] as const).map(([id, etichetta]) => (
           <button key={id} type="button" aria-pressed={modo === id} disabled={occupato} onClick={() => {
             onModo(id);
             setAvanzamento('');

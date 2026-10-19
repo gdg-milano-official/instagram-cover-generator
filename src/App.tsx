@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import Card from './Card.jsx';
-import Carte from './Carte.jsx';
-import CaricaCarte, { useCarteCaricate } from './CaricaCarte.jsx';
-import Persone, { usePersone } from './Persone.jsx';
-import Sponsor from './Sponsor.jsx';
-import Team from './Team.jsx';
-import { kitCaricato, kitDa } from './carte.js';
-import { DEMO, fetchSpeakers } from './sessionize.js';
-import { generaConAI, instagramPost, linkedinPost, plainEvent } from './posts.js';
-import { FORMATI, esportaTutto, pngName, renderCard, save } from './export.js';
+import Card from './Card.tsx';
+import Carte from './Carte.tsx';
+import CaricaCarte, { useCarteCaricate } from './CaricaCarte.tsx';
+import Persone, { usePersone } from './Persone.tsx';
+import Sponsor from './Sponsor.tsx';
+import Team from './Team.tsx';
+import { kitCaricato, kitDa } from './carte.ts';
+import { DEMO, fetchSpeakers } from './sessionize.ts';
+import { generaConAI, instagramPost, linkedinPost, plainEvent } from './posts.ts';
+import { FORMATI, esportaTutto, pngName, renderCard, save } from './export.ts';
+import type { Formato, Voce } from './export.ts';
+import type { Cfg, Post } from './posts.ts';
+import type { Speaker as DatiSpeaker } from './sessionize.ts';
+import type { FormEvent } from 'react';
 
-const DEFAULTS = {
+const DEFAULTS: Cfg = {
   apiId: 'qcrth74k',
   eventName: 'DevFest Milano 2026',
   organizers: 'GDG Cloud Milano & GDG Milano',
@@ -22,29 +26,29 @@ const DEFAULTS = {
 
 // Sezione e sottosezione stanno nel percorso (/kit-social-speaker/foto): un link
 // apre il tab giusto e avanti/indietro del browser funzionano.
-const SEZIONI = [['organizzatori-sponsor', '👥 Organizzatori e sponsor'], ['carte', '📤 Carica carte'], ['speaker', '🎤 Locandine speaker'], ['kit-social-speaker', '🃏 Kit social speaker'], ['kit-social-sponsors', '🤝 Kit social sponsors'], ['kit-social-organizzatori', '🙌 Kit social organizzatori']];
+const SEZIONI: [string, string][] = [['organizzatori-sponsor', '👥 Organizzatori e sponsor'], ['carte', '📤 Carica carte'], ['speaker', '🎤 Locandine speaker'], ['kit-social-speaker', '🃏 Kit social speaker'], ['kit-social-sponsors', '🤝 Kit social sponsors'], ['kit-social-organizzatori', '🙌 Kit social organizzatori']];
 
 const leggiPercorso = () => location.pathname.split('/').filter(Boolean);
 
 function usePercorso() {
-  const [parti, setParti] = useState(leggiPercorso);
+  const [parti, setParti] = useState<string[]>(leggiPercorso);
   useEffect(() => {
     const aggiorna = () => setParti(leggiPercorso());
     addEventListener('popstate', aggiorna);
     return () => removeEventListener('popstate', aggiorna);
   }, []);
   // la query (?api=...) resta: cambiare tab non deve cambiare evento
-  const vai = (...nuove) => {
+  const vai = (...nuove: string[]) => {
     history.pushState(null, '', `/${nuove.join('/')}${location.search}`);
     setParti(nuove);
   };
-  return [parti, vai];
+  return [parti, vai] as const;
 }
 
 // Instagram e Facebook hanno lo stesso formato: in anteprima basta una voce.
-const ANTEPRIME = [['instagram', '4:5 · Instagram e Facebook'], ['linkedin', '1:1 · LinkedIn']];
+const ANTEPRIME: [string, string][] = [['instagram', '4:5 · Instagram e Facebook'], ['linkedin', '1:1 · LinkedIn']];
 
-const CAMPI = [
+const CAMPI: [keyof Cfg, string, string][] = [
   ['apiId', 'Sessionize API ID', 'es. 4qmcvnlr'],
   ['eventName', 'Nome evento', 'DevFest Milano 2026'],
   ['organizers', 'Organizzatori', 'GDG Cloud Milano & GDG Milano'],
@@ -55,21 +59,27 @@ const CAMPI = [
 
 // Salvo solo quello che l'utente ha davvero confermato: scrivere i default al
 // primo avvio li congelerebbe, e un default aggiornato non arriverebbe piu'.
-const leggiCfg = () => {
+const leggiCfg = (): Cfg => {
   const salvato = JSON.parse(localStorage.getItem('devfest-cfg-v4') || '{}');
   const daUrl = new URLSearchParams(location.search).get('api');
   return { ...DEFAULTS, ...salvato, ...(daUrl ? { apiId: daUrl } : {}) };
 };
 
 // Una generazione AI e' ~25 secondi: in fila 23 speaker diventano dieci minuti.
-async function inParallelo(elementi, quanti, lavoro) {
+async function inParallelo<T>(elementi: T[], quanti: number, lavoro: (x: T) => Promise<void>) {
   const coda = [...elementi];
-  const operaio = async () => { while (coda.length) await lavoro(coda.shift()); };
+  const operaio = async () => { while (coda.length) await lavoro(coda.shift()!); };
   await Promise.all(Array.from({ length: Math.min(quanti, elementi.length) }, operaio));
 }
 
-function Speaker({ speaker, post, cfg, prompt, anteprima, aiAttiva, onCampo, onPost, registra }) {
-  const cardRef = useRef(null);
+// Quello che il parent tiene di ogni speaker in pagina.
+interface Riga { readonly card: HTMLDivElement | null; genera: () => Promise<Post> }
+
+function Speaker({ speaker, post, cfg, prompt, anteprima, aiAttiva, onCampo, onPost, registra }: {
+  speaker: DatiSpeaker; post: Post; cfg: Cfg; prompt: string; anteprima: string; aiAttiva: boolean;
+  onCampo: (patch: Partial<DatiSpeaker>) => void; onPost: (p: Post) => void; registra: (id: string, riga: Riga) => void;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const ai = useMutation({
     mutationFn: () => generaConAI(speaker, cfg, prompt),
@@ -77,10 +87,10 @@ function Speaker({ speaker, post, cfg, prompt, anteprima, aiAttiva, onCampo, onP
   });
 
   const scarica = useMutation({
-    mutationFn: async (formato) => {
-      const canvas = await renderCard(cardRef.current, formato);
-      await new Promise((r) => canvas.toBlob((b) => {
-        save(b, pngName(cfg, speaker.name, document.body.classList.contains('dark'), formato));
+    mutationFn: async (formato: Formato) => {
+      const canvas = await renderCard(cardRef.current!, formato);
+      await new Promise<void>((r) => canvas.toBlob((b) => {
+        save(b!, pngName(cfg, speaker.name, document.body.classList.contains('dark'), formato));
         r();
       }));
     }
@@ -107,7 +117,7 @@ function Speaker({ speaker, post, cfg, prompt, anteprima, aiAttiva, onCampo, onP
       </div>
 
       <div className="posts">
-        {[['Instagram', 'instagram'], ['LinkedIn', 'linkedin']].map(([titolo, chiave]) => (
+        {([['Instagram', 'instagram'], ['LinkedIn', 'linkedin']] as const).map(([titolo, chiave]) => (
           <div className="post" key={chiave}>
             <div className="post-head">
               <h3>{titolo}</h3>
@@ -153,16 +163,16 @@ export default function App() {
 
   // Stato modificabile, tenuto qui e non nelle card: serve per esportarlo tutto
   // insieme e, soprattutto, per poterlo riempire da un file importato.
-  const [modifiche, setModifiche] = useState({});   // id -> campi della locandina
-  const [testi, setTesti] = useState({});           // id -> { instagram, linkedin }
-  const righe = useRef(new Map());
+  const [modifiche, setModifiche] = useState<Record<string, Partial<DatiSpeaker>>>({});   // id -> campi della locandina
+  const [testi, setTesti] = useState<Record<string, Post>>({});           // id -> { instagram, linkedin }
+  const righe = useRef(new Map<string, Riga>());
 
   useEffect(() => {
     document.body.classList.toggle('dark', scuro);
     localStorage.setItem('devfest-theme', scuro ? 'dark' : 'light');
   }, [scuro]);
 
-  const stato = useQuery({
+  const stato = useQuery<{ ai: boolean; promptDefault?: string }>({
     queryKey: ['stato'],
     queryFn: async () => (await fetch('/stato')).json(),
     staleTime: Infinity
@@ -184,14 +194,13 @@ export default function App() {
       .filter((sp) => !q || `${sp.name} ${sp.talk} ${sp.room} ${sp.tags}`.toLowerCase().includes(q));
   }, [speakers.data, modifiche, filtro]);
 
-  const postDi = (sp) =>
+  const postDi = (sp: DatiSpeaker) =>
     testi[sp.id] ?? { instagram: instagramPost(sp, cfg), linkedin: linkedinPost(sp, cfg) };
 
-  const visibili = () => elenco.map((sp) => ({
-    speaker: sp,
-    post: postDi(sp),
-    ...righe.current.get(sp.id)
-  })).filter((v) => v.card);
+  const visibili = () => elenco.flatMap((sp) => {
+    const riga = righe.current.get(sp.id);
+    return riga?.card ? [{ speaker: sp, post: postDi(sp), card: riga.card, genera: riga.genera }] : [];
+  });
 
   const generaTutti = useMutation({
     mutationFn: async () => {
@@ -207,7 +216,7 @@ export default function App() {
 
   const zip = useMutation({
     mutationFn: () => esportaTutto({
-      voci: visibili(),
+      voci: visibili() satisfies Voce[],
       cfg,
       scuro,
       onProgress: (i, n) => setAvanzamento(`Preparo ${i}/${n}…`)
@@ -235,14 +244,14 @@ export default function App() {
     setAvanzamento(`${elenco.length} schede esportate.`);
   }
 
-  async function importaTesti(file) {
+  async function importaTesti(file: File) {
     try {
       const dati = JSON.parse(await file.text());
       if (dati.formato !== 'devfest-post') throw new Error('non e’ un export di questa app');
 
       // Gli id valgono per lo stesso evento; se cambiano, ripiego sul nome.
       const perNome = new Map((speakers.data || []).map((sp) => [sp.name.toLowerCase(), sp.id]));
-      const noviModifiche = {}, noviTesti = {};
+      const noviModifiche: typeof modifiche = {}, noviTesti: typeof testi = {};
       let presi = 0, saltati = 0;
       for (const voce of dati.speaker || []) {
         const id = (speakers.data || []).some((sp) => sp.id === voce.id)
@@ -259,11 +268,11 @@ export default function App() {
       setTesti((t) => ({ ...t, ...noviTesti }));
       setAvanzamento(`Importate ${presi} schede${saltati ? `, ${saltati} senza corrispondenza` : ''}.`);
     } catch (err) {
-      setAvanzamento(`Import fallito: ${err.message}`);
+      setAvanzamento(`Import fallito: ${(err as Error).message}`);
     }
   }
 
-  const conferma = (e) => {
+  const conferma = (e: FormEvent) => {
     e.preventDefault();
     localStorage.setItem('devfest-cfg-v4', JSON.stringify(bozza));
     setCfg(bozza);
@@ -357,7 +366,7 @@ export default function App() {
                   <strong>⬆︎ Importa testi</strong>
                   <span>riprendi da un export JSON</span>
                   <input type="file" accept="application/json,.json"
-                    onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) importaTesti(f); }} />
+                    onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) importaTesti(f); }} />
                 </label>
               </div>
 

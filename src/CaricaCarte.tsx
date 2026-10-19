@@ -5,46 +5,51 @@
 // la riga). Le carte vivono solo nella scheda; gli abbinamenti a mano restano nel
 // localStorage per nome di file, cosi' ricaricando la stessa cartella tornano a posto.
 import { useEffect, useState } from 'react';
-import { abbinamenti, cartaDaFile } from './carte.js';
+import type { DragEvent } from 'react';
+import { abbinamenti, cartaDaFile } from './carte.ts';
+import type { Carta, KitSpeaker, Persone, Scelte } from './carte.ts';
 
-const ordine = (c) => Number(c.numero) || Infinity;
+const ordine = (c: Carta) => Number(c.numero) || Infinity;
 
-function salvato(chiave, iniziale) {
+function salvato<T>(chiave: string, iniziale: T): T {
   try {
-    return JSON.parse(localStorage.getItem(chiave)) ?? iniziale;
+    return JSON.parse(localStorage.getItem(chiave) ?? 'null') ?? iniziale;
   } catch {
     return iniziale;
   }
 }
 
-export function useSalvato(chiave, iniziale = {}) {
+export function useSalvato<T>(chiave: string, iniziale: T) {
   const [valore, setValore] = useState(() => salvato(chiave, iniziale));
   useEffect(() => localStorage.setItem(chiave, JSON.stringify(valore)), [chiave, valore]);
-  return [valore, setValore];
+  return [valore, setValore] as const;
 }
 
 // Lo stato sta in App: le carte servono anche fuori da questa sezione.
 export function useCarteCaricate() {
-  const [carte, setCarte] = useState([]);
-  const [scelte, setScelte] = useSalvato('carte-scelte');   // id -> file, a mano
+  const [carte, setCarte] = useState<Carta[]>([]);
+  const [scelte, setScelte] = useSalvato<Scelte>('carte-scelte', {});   // id -> file, a mano
   return { carte, setCarte, scelte, setScelte };
 }
 
-export default function CaricaCarte({ speakers, persone, carte, setCarte, scelte, setScelte, onKit, onPersone }) {
-  const gruppi = [
-    ['🎤 Speaker', speakers, (sp) => sp.talk],
+type Riga = { id: string; name: string; role: string; foto?: string };
+
+export default function CaricaCarte({ speakers, persone, carte, setCarte, scelte, setScelte, onKit, onPersone }:
+  ReturnType<typeof useCarteCaricate> & { speakers: KitSpeaker[]; persone: Persone; onKit: () => void; onPersone: () => void }) {
+  const gruppi: [string, Riga[], (r: Riga) => string][] = [
+    ['🎤 Speaker', speakers, (sp) => (sp as KitSpeaker).talk],
     ['🧑‍💻 Organizzatori', persone.team, (p) => p.role],
     ['🤝 Sponsor', persone.partner, (p) => p.role]
   ];
   const collegate = abbinamenti(gruppi.flatMap(([, elenco]) => elenco), carte, scelte);
-  const [presa, setPresa] = useState(null);   // carta scelta col click, aspetta la riga
-  const [sopra, setSopra] = useState(null);   // dove sta passando il trascinamento
+  const [presa, setPresa] = useState<string | null>(null);   // carta scelta col click, aspetta la riga
+  const [sopra, setSopra] = useState<string | null>(null);   // dove sta passando il trascinamento
   const perFile = new Map(carte.map((c) => [c.file, c]));
   const usate = new Set(Object.values(collegate));
   const libere = carte.filter((c) => !usate.has(c.file));
-  const conta = (elenco) => `${elenco.filter((sp) => collegate[sp.id]).length}/${elenco.length}`;
+  const conta = (elenco: Riga[]) => `${elenco.filter((sp) => collegate[sp.id]).length}/${elenco.length}`;
 
-  function aggiungi(files) {
+  function aggiungi(files: FileList) {
     const nuove = [...files].filter((f) => f.type.startsWith('image/'))
       .map((f) => ({ ...cartaDaFile(f.name), url: URL.createObjectURL(f) }));
     setCarte((prima) => [...prima.filter((c) => !nuove.some((n) => n.file === c.file)), ...nuove]
@@ -52,17 +57,17 @@ export default function CaricaCarte({ speakers, persone, carte, setCarte, scelte
   }
 
   // Una carta va a una sola riga: chi l'aveva a mano torna all'abbinamento per nome.
-  function collega(id, file) {
+  function collega(id: string, file: string | null) {
     setScelte((s) => ({ ...Object.fromEntries(Object.entries(s).filter(([, f]) => !file || f !== file)), [id]: file }));
     setPresa(null);
   }
 
-  const trascina = (file) => ({ draggable: true, onDragStart: (e) => e.dataTransfer.setData('text/plain', file) });
+  const trascina = (file: string) => ({ draggable: true, onDragStart: (e: DragEvent) => e.dataTransfer.setData('text/plain', file) });
   // Sullo stesso bersaglio possono cadere file dal disco o una carta della pagina.
-  const bersaglio = (id, azione) => ({
-    onDragOver: (e) => { e.preventDefault(); setSopra(id); },
+  const bersaglio = (id: string, azione: (file: string) => void) => ({
+    onDragOver: (e: DragEvent) => { e.preventDefault(); setSopra(id); },
     onDragLeave: () => setSopra((s) => (s === id ? null : s)),
-    onDrop: (e) => {
+    onDrop: (e: DragEvent) => {
       e.preventDefault();
       setSopra(null);
       if (e.dataTransfer.files.length) return aggiungi(e.dataTransfer.files);
@@ -82,7 +87,7 @@ export default function CaricaCarte({ speakers, persone, carte, setCarte, scelte
       </div>
 
       <label className={`carica-zona${sopra === 'zona' ? ' sopra' : ''}`} {...bersaglio('zona', () => {})}>
-        <input type="file" accept="image/*" multiple onChange={(e) => { aggiungi(e.target.files); e.target.value = ''; }} />
+        <input type="file" accept="image/*" multiple onChange={(e) => { if (e.target.files) aggiungi(e.target.files); e.target.value = ''; }} />
         <strong>Trascina qui le carte o clicca per sceglierle</strong>
         <span>file "NN.Nome_Cognome (...).png": numero e nome li leggo dal file e abbino per nome</span>
       </label>
@@ -108,7 +113,7 @@ export default function CaricaCarte({ speakers, persone, carte, setCarte, scelte
           {elenco.length ? (
             <ol className="carica-elenco">
               {elenco.map((sp) => {
-                const c = perFile.get(collegate[sp.id]);
+                const c = perFile.get(collegate[sp.id] ?? '');
                 return (
                   <li key={sp.id} className={`${c ? 'collegato' : ''}${sopra === sp.id ? ' sopra' : ''}${presa ? ' in-attesa' : ''}`}
                     {...bersaglio(sp.id, (file) => collega(sp.id, file))}

@@ -4,11 +4,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import JSZip from 'jszip';
-import { FPS, FRAMES, H, PARTNER, W, disegnaReel, preparaAsset, registraReel } from './reel.js';
-import { save, slug } from './export.js';
-import { plainEvent } from './posts.js';
+import { FPS, FRAMES, H, PARTNER, W, disegnaReel, preparaAsset, registraReel } from './reel.ts';
+import type { Asset, Partner, TestiPartner } from './reel.ts';
+import { save, slug } from './export.ts';
+import { plainEvent } from './posts.ts';
+import type { Cfg } from './posts.ts';
 
-const ETICHETTE = {
+const ETICHETTE: Record<keyof TestiPartner, string> = {
   kicker: 'Post-it', claim: 'Claim', titolo: 'Titolo terza scena', punto1: 'Post-it 1', punto2: 'Post-it 2',
   punto3: 'Post-it 3', cta: 'Invito', ctaSub: 'Sotto l’invito', data: 'Data e luogo'
 };
@@ -17,9 +19,12 @@ const VOCI = Object.entries(PARTNER);
 const SECONDI = FRAMES / FPS;
 
 // Anteprima in loop: ferma mentre si registra, per non rubare tempo al video.
-function Scheda({ p, cfg, testi, caption, onTesti, onCaption, onReel, occupato }) {
-  const canvas = useRef(null);
-  const [asset, setAsset] = useState(null);
+function Scheda({ p, cfg, testi, caption, onTesti, onCaption, onReel, occupato }: {
+  p: Partner; cfg: Cfg; testi: TestiPartner; caption: string; occupato: boolean;
+  onTesti: (t: TestiPartner | undefined) => void; onCaption: (v: string) => void; onReel: () => void;
+}) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const [asset, setAsset] = useState<Asset | null>(null);
   const [errore, setErrore] = useState('');
   const attuali = useRef({ testi, cfg });
   attuali.current = { testi, cfg };
@@ -34,7 +39,7 @@ function Scheda({ p, cfg, testi, caption, onTesti, onCaption, onReel, occupato }
     if (!asset || occupato) return;
     let f = 0;
     const timer = setInterval(() => {
-      disegnaReel(canvas.current.getContext('2d'), f, asset, attuali.current.testi, attuali.current.cfg);
+      disegnaReel(canvas.current!.getContext('2d')!, f, asset, attuali.current.testi, attuali.current.cfg);
       f = (f + 1) % FRAMES;
     }, 1000 / FPS);
     return () => clearInterval(timer);
@@ -59,7 +64,7 @@ function Scheda({ p, cfg, testi, caption, onTesti, onCaption, onReel, occupato }
           <div className="post-head"><h3>Testi del reel</h3>
             <span><button className="ghost" onClick={() => onTesti(undefined)}>Ripristina</button></span>
           </div>
-          {Object.keys(p.testi).map((k) => (
+          {(Object.keys(p.testi) as (keyof TestiPartner)[]).map((k) => (
             <label key={k}>
               {ETICHETTE[k]}
               <input value={testi[k]} onChange={(e) => onTesti({ ...testi, [k]: e.target.value })} />
@@ -86,22 +91,23 @@ function Scheda({ p, cfg, testi, caption, onTesti, onCaption, onReel, occupato }
   );
 }
 
-export default function Sponsor({ cfg }) {
-  const regia = useRef(null);
-  const [inScena, setInScena] = useState(null);     // lo sponsor del reel sul canvas di regia
-  const [modifiche, setModifiche] = useState({});   // id partner -> testi
-  const [captions, setCaptions] = useState({});     // id partner -> caption
+export default function Sponsor({ cfg }: { cfg: Cfg }) {
+  const regia = useRef<HTMLCanvasElement>(null);
+  const [inScena, setInScena] = useState<string | null>(null);     // lo sponsor del reel sul canvas di regia
+  const [modifiche, setModifiche] = useState<Record<string, TestiPartner | undefined>>({});   // id partner -> testi
+  const [captions, setCaptions] = useState<Record<string, string>>({});     // id partner -> caption
   const [avanzamento, setAvanzamento] = useState('');
-  const testiDi = (chiave) => modifiche[chiave] ?? PARTNER[chiave].testi;
-  const captionDi = (chiave) => captions[chiave] ?? PARTNER[chiave].caption(cfg);
+  const testiDi = (chiave: string) => modifiche[chiave] ?? PARTNER[chiave].testi;
+  const captionDi = (chiave: string) => captions[chiave] ?? PARTNER[chiave].caption(cfg);
 
-  const registra = async (chiave, prefisso = '') => {
+  const registra = async (chiave: string, prefisso = '') => {
     const p = PARTNER[chiave];
     const a = await preparaAsset(p);
     setInScena(p.nome);
     try {
-      return await registraReel(regia.current,
-        (f) => disegnaReel(regia.current.getContext('2d'), f, a, testiDi(chiave), cfg),
+      const tela = regia.current!;
+      return await registraReel(tela,
+        (f) => disegnaReel(tela.getContext('2d')!, f, a, testiDi(chiave), cfg),
         (f, n) => setAvanzamento(`${prefisso}Registro ${p.nome} ${Math.ceil(f / FPS)}/${n / FPS} s…`));
     } finally {
       setInScena(null);
@@ -109,7 +115,7 @@ export default function Sponsor({ cfg }) {
   };
 
   const unReel = useMutation({
-    mutationFn: async (chiave) => {
+    mutationFn: async (chiave: string) => {
       const { blob, estensione } = await registra(chiave);
       save(blob, `${slug(plainEvent(cfg))}-reel-${chiave}.${estensione}`);
       return PARTNER[chiave].nome;
@@ -123,7 +129,7 @@ export default function Sponsor({ cfg }) {
       const zip = new JSZip();
       for (const [i, [chiave]] of VOCI.entries()) {
         const { blob, estensione } = await registra(chiave, `${i + 1}/${VOCI.length} · `);
-        const dir = zip.folder(chiave);
+        const dir = zip.folder(chiave)!;
         dir.file(`reel.${estensione}`, blob);
         dir.file('caption.txt', captionDi(chiave));
       }

@@ -1,13 +1,72 @@
 // Contenuti per ogni speaker: storia, post, carosello e reel in stop motion.
 // Due soggetti: la carta BizzyMagic (public/carte/speaker.json) oppure la foto
 // profilo di Sessionize in una polaroid (dati Sessionize caricati dall'app, vedi
-// kitDa). Primitive di carta in reel.js; speaker.json lo genera scripts/carte.mjs.
-import { BODY, C, DISPLAY, FPS, GOOGLE, H, MONO, W, carica, caricaFont, carta, grana, nastro, pezzo, righe, scritta, sfondo } from './reel.js';
-import { plainEvent } from './posts.js';
-import { topicTags } from './sessionize.js';
+// kitDa). Primitive di carta in reel.ts; speaker.json lo genera scripts/carte.ts.
+import { BODY, C, DISPLAY, FPS, GOOGLE, H, MONO, W, carica, caricaFont, carta, grana, nastro, pezzo, righe, scritta, sfondo } from './reel.ts';
+import type { Ctx, Disegno, Tempi } from './reel.ts';
+import { plainEvent } from './posts.ts';
+import type { Cfg } from './posts.ts';
+import { topicTags } from './sessionize.ts';
+import type { Speaker } from './sessionize.ts';
 
-export const LATO = { storia: [W, H], post: [W, 1350], carosello: [W, 1350], reel: [W, H] };
+export type Gruppo = 'evento' | 'partner' | 'location' | 'team' | 'collezione';
+export type Modo = 'carta' | 'foto';
+
+// Chi finisce su storia, post, carosello e reel: uno speaker del kit, un
+// organizzatore o una carta qualsiasi. Senza talk e' una carta "altra".
+export interface Soggetto {
+  id: string;
+  name: string;
+  role: string;
+  foto?: string;
+  carta?: string;
+  numero?: string;
+  gruppo?: Gruppo;
+  kind?: string;
+  talk?: string;
+  room?: string;
+  ora?: string;
+  abstract?: string;
+  bio?: string;
+  coSpeaker?: string[];
+  lavoro?: string;
+}
+
+export interface KitSpeaker extends Speaker {
+  foto: string;
+  ora: string;
+  coSpeaker: string[];
+  carta?: string;
+  numero?: string;
+  gruppo?: Gruppo;
+}
+
+// Organizzatore o sponsor dell'anagrafica.
+export interface Persona {
+  id: string;
+  name: string;
+  role: string;
+  lavoro?: string;
+  foto?: string;
+  carta?: string;
+  numero?: string;
+}
+export interface Persone { team: Persona[]; partner: Persona[] }
+
+// Una carta caricata: numero e nome vengono dal nome del file.
+export interface Carta { file: string; numero: string; nome: string; url: string }
+export type Scelte = Record<string, string | null>;
+
+// Cosa disegnare al posto del soggetto: la carta o la polaroid con la foto.
+export type AssetCarta = { grana: HTMLCanvasElement } & (
+  | { foto: HTMLImageElement; carta?: undefined }
+  | { carta: HTMLImageElement; foto?: undefined });
+
+export const LATO: Record<'storia' | 'post' | 'carosello' | 'reel', [number, number]> = { storia: [W, H], post: [W, 1350], carosello: [W, 1350], reel: [W, H] };
 export const SLIDE = 4;
+
+// Un'immagine del kit: nome del file, formato e come disegnarla.
+export type Immagine = [nome: string, formato: keyof typeof LATO, disegna: (c: Ctx, a: AssetCarta, sp: Soggetto, cfg: Cfg) => void];
 export const FRAMES_CARTA = 12 * FPS;
 
 const RAPPORTO = 1039 / 744;   // le carte sono 6,3x8,8 cm
@@ -17,20 +76,20 @@ const KICKER = 'Nuova carta sbloccata!';
 const GIORNO = 'Sab 10 ottobre';
 
 // modo 'foto': polaroid con la foto Sessionize al posto della carta.
-export async function preparaCarta(sp, modo = 'carta') {
+export async function preparaCarta(sp: Soggetto, modo: Modo = 'carta'): Promise<AssetCarta> {
   await caricaFont();
   return modo === 'foto'
-    ? { grana: grana(), foto: await carica(sp.foto) }
-    : { grana: grana(), carta: await carica(sp.carta) };
+    ? { grana: grana(), foto: await carica(sp.foto || '') }
+    : { grana: grana(), carta: await carica(sp.carta || '') };
 }
 
-const kicker = (a, sp) => (!a.foto ? KICKER : sp.gruppo === 'team' ? 'Ti presentiamo il team!'
-  : ['Workshop', 'Masterclass'].includes(sp.kind) ? `${sp.kind} di sabato!` : 'Sul palco sabato!');
+const kicker = (a: AssetCarta, sp: Soggetto) => (!a.foto ? KICKER : sp.gruppo === 'team' ? 'Ti presentiamo il team!'
+  : ['Workshop', 'Masterclass'].includes(sp.kind || '') ? `${sp.kind} di sabato!` : 'Sul palco sabato!');
 
 /* ---------- Pezzi ---------- */
 
 // La carta da gioco, con gli angoli tondi delle carte vere.
-function cartaGioco(c, img, w) {
+function cartaGioco(c: Ctx, img: HTMLImageElement, w: number) {
   const h = w * RAPPORTO;
   c.save();
   c.shadowColor = 'rgba(30,20,5,.4)'; c.shadowBlur = 28; c.shadowOffsetX = 6; c.shadowOffsetY = 14;
@@ -44,7 +103,7 @@ function cartaGioco(c, img, w) {
 }
 
 // La polaroid con la foto profilo. `sviluppo` da 0 a 1: nel reel si sviluppa a scatti.
-function polaroid(c, img, w, sviluppo = 1) {
+function polaroid(c: Ctx, img: HTMLImageElement, w: number, sviluppo = 1) {
   const h = w * 1.18, lato = w * 0.88, x = -lato / 2, y = -h / 2 + (w - lato) / 2;
   carta(c, w, h, '#fbfaf5', 3);
   c.fillStyle = '#2b2a28';
@@ -60,10 +119,10 @@ function polaroid(c, img, w, sviluppo = 1) {
 }
 
 // Carta o polaroid, a seconda di cosa c'e' in `a`.
-const soggetto = (c, a, w) => (a.foto ? polaroid(c, a.foto, w) : cartaGioco(c, a.carta, w));
+const soggetto = (c: Ctx, a: AssetCarta, w: number) => (a.foto ? polaroid(c, a.foto, w) : cartaGioco(c, a.carta, w));
 
 // Il dorso, prima che la carta si giri.
-function dorso(c, w) {
+function dorso(c: Ctx, w: number) {
   const h = w * RAPPORTO;
   c.save();
   c.shadowColor = 'rgba(30,20,5,.4)'; c.shadowBlur = 28; c.shadowOffsetY = 14;
@@ -83,7 +142,15 @@ function dorso(c, w) {
 
 // Striscia di carta o post-it attorno a un testo: altezza nota prima di disegnarla,
 // cosi' i pezzi si impilano senza sovrapporsi qualunque sia la lunghezza del titolo.
-function blocco(ctx, s, { size, font = DISPLAY, weight = 800, maxW = 900, colore = '#fff', color = C.ink, postit = false }) {
+interface Blocco { h: number; draw: Disegno }
+interface Voce extends Blocco, Partial<Tempi> { id?: number; x?: number; rot?: number }
+// `cond && voce`: quelle false restano fuori dalla pila.
+type Forse<T> = T | false | '' | 0 | null | undefined;
+const presenti = (voci: Forse<Voce>[]) => voci.filter((v): v is Voce => Boolean(v));
+
+function blocco(ctx: Ctx, s: string, { size, font = DISPLAY, weight = 800, maxW = 900, colore = '#fff', color = C.ink, postit = false }: {
+  size: number; font?: string; weight?: number; maxW?: number; colore?: string; color?: string; postit?: boolean;
+}): Blocco {
   ctx.font = `${weight} ${size}px ${font}`;
   const r = righe(ctx, s, maxW);
   const w = Math.max(...r.map((t) => ctx.measureText(t).width)) + size * (postit ? 1.6 : 0.9);
@@ -99,9 +166,9 @@ function blocco(ctx, s, { size, font = DISPLAY, weight = 800, maxW = 900, colore
 }
 
 // Pezzi uno sotto l'altro a partire da y; restituisce dove finisce la pila.
-function pila(ctx, f, { x = W / 2, y, gap = 20 }, voci) {
+function pila(ctx: Ctx, f: number, { x = W / 2, y, gap = 20 }: { x?: number; y: number; gap?: number }, voci: Forse<Voce>[]) {
   let cima = y;
-  voci.filter(Boolean).forEach((v, i) => {
+  presenti(voci).forEach((v, i) => {
     pezzo(ctx, f, v.id ?? 900 + i, {
       x: v.x ?? x, y: cima + v.h / 2, rot: v.rot ?? 0, in: v.in ?? 0, da: v.da, dur: v.dur, out: v.out
     }, v.draw);
@@ -111,9 +178,9 @@ function pila(ctx, f, { x = W / 2, y, gap = 20 }, voci) {
 }
 
 // Il pezzo si porta dietro posizione e tempi.
-const con = (b, opz) => ({ ...b, ...opz });
+const con = (b: Blocco, opz: Omit<Voce, keyof Blocco>): Voce => ({ ...b, ...opz });
 
-function testata(ctx, f, cfg, y, inizio = 0, larghezza = W) {
+function testata(ctx: Ctx, f: number, cfg: Cfg, y: number, inizio = 0, larghezza = W) {
   GOOGLE.forEach((colore, i) => pezzo(ctx, f, 10 + i,
     { x: larghezza / 2 + (i - 1.5) * 70, y, in: inizio + i, da: [0, -500], dur: 3 }, (c) => {
       c.save();
@@ -126,15 +193,15 @@ function testata(ctx, f, cfg, y, inizio = 0, larghezza = W) {
   pezzo(ctx, f, 20, { x: larghezza / 2, y: y + 70, rot: -1.5, in: inizio + 4, da: [0, -400] }, b.draw);
 }
 
-const numero = (ctx, sp, size = 28) =>
+const numero = (ctx: Ctx, sp: Soggetto, size = 28) =>
   blocco(ctx, `Carta ${sp.numero}`, { size, font: MONO, weight: 700, colore: C.ink, color: '#fff' });
-const info = (ctx, sp, size, maxW = 900) =>
+const info = (ctx: Ctx, sp: Soggetto, size: number, maxW = 900) =>
   blocco(ctx, `${GIORNO} · ${sp.ora} · ${sp.room}`, { size, font: MONO, weight: 500, colore: C.blue, color: '#fff', maxW });
-const tipo = (ctx, sp, size) => blocco(ctx, `🎤 ${sp.kind}`, { size, colore: AZZURRO, postit: true });
-const titolo = (ctx, sp, size, maxW) => blocco(ctx, sp.talk, { size, maxW });
+const tipo = (ctx: Ctx, sp: Soggetto, size: number) => blocco(ctx, `🎤 ${sp.kind}`, { size, colore: AZZURRO, postit: true });
+const titolo = (ctx: Ctx, sp: Soggetto, size: number, maxW: number) => blocco(ctx, sp.talk || '', { size, maxW });
 
 // Le prime frasi dell'abstract, senza superare `max` caratteri.
-export function estratto(testo, max = 280) {
+export function estratto(testo: string | null | undefined, max = 280) {
   const pulito = String(testo || '').replace(/[*_#>`]/g, '').replace(/\s+/g, ' ').trim();
   if (pulito.length <= max) return pulito;
   const frasi = pulito.match(/[^.!?]+[.!?]+/g) || [];
@@ -145,7 +212,7 @@ export function estratto(testo, max = 280) {
 
 /* ---------- Reel (12 s) ---------- */
 
-export function disegnaReelCarta(ctx, f, a, sp, cfg) {
+export function disegnaReelCarta(ctx: Ctx, f: number, a: AssetCarta, sp: Soggetto, cfg: Cfg) {
   sfondo(ctx, f, a);
   testata(ctx, f, cfg, 200, 1);
 
@@ -184,7 +251,7 @@ export function disegnaReelCarta(ctx, f, a, sp, cfg) {
 
 /* ---------- Storia (1080x1920, statica) ---------- */
 
-export function disegnaStoria(ctx, a, sp, cfg) {
+export function disegnaStoria(ctx: Ctx, a: AssetCarta, sp: Soggetto, cfg: Cfg) {
   const f = FERMO;
   sfondo(ctx, f, a);
   testata(ctx, f, cfg, 290);
@@ -200,7 +267,7 @@ export function disegnaStoria(ctx, a, sp, cfg) {
 
 /* ---------- Post (1080x1350) ---------- */
 
-export function disegnaPost(ctx, a, sp, cfg) {
+export function disegnaPost(ctx: Ctx, a: AssetCarta, sp: Soggetto, cfg: Cfg) {
   const f = FERMO, [w, h] = LATO.post;
   sfondo(ctx, f, a, w, h);
   testata(ctx, f, cfg, 90);
@@ -219,7 +286,7 @@ export function disegnaPost(ctx, a, sp, cfg) {
 
 /* ---------- Carosello (4 slide 1080x1350) ---------- */
 
-export function disegnaCarosello(ctx, i, a, sp, cfg) {
+export function disegnaCarosello(ctx: Ctx, i: number, a: AssetCarta, sp: Soggetto, cfg: Cfg) {
   const f = FERMO + i * 7, [w, h] = LATO.carosello;
   sfondo(ctx, f, a, w, h);
 
@@ -241,7 +308,7 @@ export function disegnaCarosello(ctx, i, a, sp, cfg) {
     ].filter(Boolean);
     pila(ctx, f, { y: 180 }, voci);
     pila(ctx, f, { y: 640, gap: 26 }, [
-      sp.coSpeaker.length && con(blocco(ctx, `insieme a ${sp.coSpeaker.join(' e ')}`, { size: 34, colore: GIALLO, postit: true }), { id: 713, rot: -3 }),
+      sp.coSpeaker?.length && con(blocco(ctx, `insieme a ${sp.coSpeaker.join(' e ')}`, { size: 34, colore: GIALLO, postit: true }), { id: 713, rot: -3 }),
       sp.bio && con(blocco(ctx, estratto(sp.bio, 420), { size: 40, font: BODY, weight: 500, maxW: 920 }), { id: 714, rot: -0.8 })
     ]);
     return;
@@ -251,26 +318,26 @@ export function disegnaCarosello(ctx, i, a, sp, cfg) {
     // Polaroid col ritratto: e' la parte illustrata della carta.
     pezzo(ctx, f, 710, { x: w / 2, y: 450, rot: -2.5 }, (c) => {
       carta(c, 820, 660, '#fff', 3);
-      c.drawImage(a.carta, 40, 135, 664, 465, -380, -300, 760, 532);
+      c.drawImage(a.carta!, 40, 135, 664, 465, -380, -300, 760, 532);
       nastro(c, -330, -330, -25);
       nastro(c, 330, -330, 25);
     });
     pila(ctx, f, { y: 830 }, [
       con(blocco(ctx, sp.name, { size: 74, maxW: 960 }), { id: 711, rot: -1.5 }),
       sp.role && con(blocco(ctx, sp.role, { size: 34, font: BODY, weight: 700, maxW: 900 }), { id: 712, rot: 1 }),
-      sp.coSpeaker.length && con(blocco(ctx, `insieme a ${sp.coSpeaker.join(' e ')}`, { size: 34, colore: GIALLO, postit: true }), { id: 713, rot: -3 }),
+      sp.coSpeaker?.length && con(blocco(ctx, `insieme a ${sp.coSpeaker.join(' e ')}`, { size: 34, colore: GIALLO, postit: true }), { id: 713, rot: -3 }),
       sp.numero && con(numero(ctx, sp, 30), { id: 714, rot: 3 })
     ]);
     return;
   }
 
   if (i === 2) {
-    const voci = [
+    const voci = presenti([
       con(tipo(ctx, sp, 48), { id: 720, rot: -3 }),
       con(titolo(ctx, sp, 64, 960), { id: 721, rot: 1 }),
       sp.abstract && con(blocco(ctx, estratto(sp.abstract, 300), { size: 38, font: BODY, weight: 500, maxW: 900 }), { id: 722, rot: -0.8 }),
       con(info(ctx, sp, 34, 960), { id: 723, rot: 1.5 })
-    ].filter(Boolean);
+    ]);
     const alto = voci.reduce((n, v) => n + v.h + 28, -28);
     pila(ctx, f, { y: Math.max(50, (h - alto) / 2), gap: 28 }, voci);
     return;
@@ -292,10 +359,11 @@ export function disegnaCarosello(ctx, i, a, sp, cfg) {
 
 /* ---------- Caption ---------- */
 
-const articolo = (kind) => ({ Workshop: 'il workshop', Masterclass: 'la masterclass', 'Lightning talk': 'il lightning talk' }[kind] || 'il talk');
+const ARTICOLI: Record<string, string> = { Workshop: 'il workshop', Masterclass: 'la masterclass', 'Lightning talk': 'il lightning talk' };
+const articolo = (kind: string) => ARTICOLI[kind] || 'il talk';
 
-export function captionCarta(sp, cfg) {
-  const insieme = sp.coSpeaker.length ? ` insieme a ${sp.coSpeaker.join(' e ')}` : '';
+export function captionCarta(sp: KitSpeaker, cfg: Cfg) {
+  const insieme = sp.coSpeaker?.length ? ` insieme a ${sp.coSpeaker.join(' e ')}` : '';
   const tags = [cfg.hashtag, '#DevFest', '#GDG', '#BizzyMagic', ...topicTags(sp.talk, sp.abstract)];
   return `🃏 ${KICKER}${sp.numero ? ` Carta ${sp.numero}:` : ''} ${sp.name}
 
@@ -309,8 +377,8 @@ ${[...new Set(tags)].join(' ')}`;
 
 // Gli speaker Sessionize nella forma che usano storia, post, carosello e reel.
 // Sessionize da' gli orari gia' in ora locale ("2026-10-10T09:30:00").
-export function kitDa(speakers) {
-  const ora = (iso) => String(iso).slice(11, 16);
+export function kitDa(speakers: Speaker[]): KitSpeaker[] {
+  const ora = (iso: string) => String(iso).slice(11, 16);
   return speakers.filter((sp) => sp.id !== 'demo' && sp.talk).map((sp) => ({
     ...sp,
     foto: sp.photo,
@@ -322,27 +390,27 @@ export function kitDa(speakers) {
 /* ---------- Carte caricate dalla UI ---------- */
 
 // Le carte che non sono di uno speaker: il gruppo decide sottotitolo e caption.
-// Per nome valgono questi, usati anche da scripts/carte.mjs; nella sezione
+// Per nome valgono questi, usati anche da scripts/carte.ts; nella sezione
 // Carica carte organizzatori e sponsor vengono invece dall'anagrafica.
-export const RUOLI = {
+export const RUOLI: Record<Gruppo, string> = {
   evento: 'La carta dell’evento',
   partner: 'Partner della DevFest Milano 2026',
   location: 'La location della DevFest Milano 2026',
   team: 'Team DevFest Milano',
   collezione: 'Una carta BizzyMagic della DevFest Milano 2026'
 };
-const GRUPPI = [
+const GRUPPI: [RegExp, Gruppo][] = [
   [/^(DevFest Milano|DevFest Milano HOLO)$/, 'evento'],
   [/^(BizzyNow|Google|Datwave)$/, 'partner'],
   [/^Randstad Box$/, 'location'],
   [/^(Manuel Caldarese|Davide Tresoldi|Daniele Bonaldo|Lorenzo De Francesco|Matteo Rocco)$/, 'team']
 ];
-export const gruppoDi = (nome) => GRUPPI.find(([re]) => re.test(nome))?.[1] || 'collezione';
+export const gruppoDi = (nome: string): Gruppo => GRUPPI.find(([re]) => re.test(nome))?.[1] || 'collezione';
 
-const norm = (s) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-z]/g, '');
+const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-z]/g, '');
 
-// "NN.Nome_Cognome (...).png", come in scripts/carte.mjs: numero e nome dal file.
-export function cartaDaFile(file) {
+// "NN.Nome_Cognome (...).png", come in scripts/carte.ts: numero e nome dal file.
+export function cartaDaFile(file: string) {
   return {
     file,
     numero: file.match(/^(\d+)\./)?.[1] || '',
@@ -352,8 +420,8 @@ export function cartaDaFile(file) {
 
 // id speaker -> file della carta. `scelte` sono gli abbinamenti fatti a mano
 // (null = scollegato apposta); gli altri speaker si abbinano per nome.
-export function abbinamenti(speakers, carte, scelte) {
-  const caricata = (file) => carte.some((c) => c.file === file);
+export function abbinamenti(speakers: { id: string; name: string }[], carte: Carta[], scelte: Scelte): Scelte {
+  const caricata = (file: string | null): file is string => carte.some((c) => c.file === file);
   const prese = new Set(Object.values(scelte).filter(caricata));
   return Object.fromEntries(speakers.map((sp) => [sp.id, sp.id in scelte
     ? (caricata(scelte[sp.id]) ? scelte[sp.id] : null)
@@ -362,18 +430,27 @@ export function abbinamenti(speakers, carte, scelte) {
 
 // Speaker, organizzatori e sponsor con la carta caricata e le carte rimaste,
 // nella forma che usano i kit. `speakers` da kitDa, `persone` dall'anagrafica.
-export function kitCaricato(speakers, carte, scelte, persone = { team: [], partner: [] }) {
-  const team = persone.team.map((p) => ({ ...p, gruppo: 'team' }));
-  const partner = persone.partner.map((p) => ({ ...p, gruppo: 'partner' }));
+export function kitCaricato<S extends { id: string; name: string }>(speakers: S[], carte: Carta[], scelte: Scelte, persone: Persone = { team: [], partner: [] }) {
+  const team = persone.team.map((p) => ({ ...p, gruppo: 'team' as const }));
+  const partner = persone.partner.map((p) => ({ ...p, gruppo: 'partner' as const }));
   const collegate = abbinamenti([...speakers, ...team, ...partner], carte, scelte);
   const totale = String(Math.max(0, ...carte.map((c) => Number(c.numero)))).padStart(3, '0');
-  const numero = (c) => (c.numero ? `${c.numero.padStart(3, '0')}/${totale}` : '');
+  const numero = (c: Carta) => (c.numero ? `${c.numero.padStart(3, '0')}/${totale}` : '');
   const perFile = new Map(carte.map((c) => [c.file, c]));
-  const conCarta = (sp) => {
-    const c = perFile.get(collegate[sp.id]);
+  const conCarta = (sp: { id: string }) => {
+    const c = perFile.get(collegate[sp.id] ?? '');
     return c && { carta: c.url, numero: numero(c) };
   };
   const usate = new Set(Object.values(collegate));
+  const altre: Soggetto[] = [
+    ...[...team, ...partner].filter((p) => collegate[p.id]).map((p) => ({
+      id: p.id, name: p.name, role: p.role || RUOLI[p.gruppo], gruppo: p.gruppo, ...conCarta(p)
+    })),
+    ...carte.filter((c) => !usate.has(c.file)).map((c, i) => {
+      const gruppo = gruppoDi(c.nome);
+      return { id: `carta-${i + 1}`, name: c.nome, role: RUOLI[gruppo], gruppo, carta: c.url, numero: numero(c) };
+    })
+  ];
   return {
     collegate,
     vuoto: !carte.length,
@@ -381,21 +458,15 @@ export function kitCaricato(speakers, carte, scelte, persone = { team: [], partn
     speaker: speakers.filter((sp) => collegate[sp.id]).map((sp) => ({ ...sp, foto: '', ...conCarta(sp) })),
     // senza carta caricata un organizzatore tiene quella che ha gia' (team.json)
     team: team.map((p) => ({ ...p, ...conCarta(p) })),
-    altre: [
-      ...[...team, ...partner].filter((p) => collegate[p.id]).map((p) => ({
-        id: p.id, name: p.name, role: p.role || RUOLI[p.gruppo], gruppo: p.gruppo, ...conCarta(p)
-      })),
-      ...carte.filter((c) => !usate.has(c.file)).map((c, i) => {
-        const gruppo = gruppoDi(c.nome);
-        return { id: `carta-${i + 1}`, name: c.nome, role: RUOLI[gruppo], gruppo, carta: c.url, numero: numero(c) };
-      })
-    ]
+    altre
   };
 }
 
+export type KitCaricato = ReturnType<typeof kitCaricato<KitSpeaker>>;
+
 // Caption del kit senza carta.
-export function captionKit(sp, cfg) {
-  const insieme = sp.coSpeaker.length ? ` insieme a ${sp.coSpeaker.join(' e ')}` : '';
+export function captionKit(sp: KitSpeaker, cfg: Cfg) {
+  const insieme = sp.coSpeaker?.length ? ` insieme a ${sp.coSpeaker.join(' e ')}` : '';
   const tags = [cfg.hashtag, '#DevFest', '#GDG', ...topicTags(sp.talk, sp.abstract)];
   const apertura = sp.kind === 'Workshop' ? `🛠️ Sabato c'è il workshop di ${sp.name}!`
     : sp.kind === 'Masterclass' ? `✨ Sabato c'è la masterclass di ${sp.name}!` : `🎤 Sabato sul palco c'è ${sp.name}!`;
@@ -410,18 +481,18 @@ ${[...new Set(tags)].join(' ')}`;
 }
 
 // Caption delle carte che non sono di uno speaker: dipende dal gruppo.
-const PRESENTA = {
-  evento: (c) => `è la carta dell'evento: ci vediamo sabato 10 ottobre al Randstad Box!`,
+const PRESENTA: Record<Gruppo, (c: Soggetto) => string> = {
+  evento: () => `è la carta dell'evento: ci vediamo sabato 10 ottobre al Randstad Box!`,
   partner: (c) => `${c.name} è partner della DevFest Milano 2026. Grazie per essere al nostro fianco! 💙`,
   location: () => `il Randstad Box è la casa della DevFest Milano 2026: Via San Vigilio 5, Milano, M2 Famagosta.`,
   team: (c) => `${c.name} fa parte del team che organizza la DevFest Milano 2026. Lo trovi sabato tra un talk e l'altro!`,
   collezione: (c) => `${c.name} è una delle carte BizzyMagic della DevFest Milano 2026.`
 };
 
-export function captionAltra(c, cfg) {
+export function captionAltra(c: Soggetto, cfg: Cfg) {
   return `🃏 ${KICKER}${c.numero ? ` Carta ${c.numero}:` : ''} ${c.name}
 
-${(PRESENTA[c.gruppo] || PRESENTA.collezione)(c)}
+${PRESENTA[c.gruppo || 'collezione'](c)}
 
 📅 Sabato 10 ottobre · 📍 Randstad Box, Milano
 🎟️ Biglietti al link in bio
@@ -429,19 +500,19 @@ ${(PRESENTA[c.gruppo] || PRESENTA.collezione)(c)}
 ${cfg.hashtag} #DevFest #GDG #BizzyMagic`;
 }
 
-/* ---------- Organizzatori (public/carte/team.json, da scripts/team.mjs) ---------- */
+/* ---------- Organizzatori (public/carte/team.json, da scripts/team.ts) ---------- */
 
 // Niente talk: chi e', che GDG organizza e cosa fa di lavoro. I testi non dicono
 // "ci vediamo sabato", cosi' il kit si puo' usare anche dopo l'evento.
 const DOVE = 'Sab 10 ottobre · Randstad Box, Milano';
-const dove = (ctx, size, maxW = 900) => blocco(ctx, DOVE, { size, font: MONO, weight: 700, colore: C.blue, color: '#fff', maxW });
-const lavoro = (ctx, sp, size, maxW) => sp.lavoro && blocco(ctx, sp.lavoro, { size, font: BODY, weight: 700, maxW });
-const squadra = (ctx, size, maxW) => blocco(ctx, '🙌 Team DevFest Milano', { size, colore: AZZURRO, postit: true, maxW });
-function volontari(ctx, cfg, size) {
+const dove = (ctx: Ctx, size: number, maxW = 900) => blocco(ctx, DOVE, { size, font: MONO, weight: 700, colore: C.blue, color: '#fff', maxW });
+const lavoro = (ctx: Ctx, sp: Soggetto, size: number, maxW: number) => blocco(ctx, sp.lavoro || '', { size, font: BODY, weight: 700, maxW });
+const squadra = (ctx: Ctx, size: number, maxW?: number) => blocco(ctx, '🙌 Team DevFest Milano', { size, colore: AZZURRO, postit: true, maxW });
+function volontari(ctx: Ctx, cfg: Cfg, size: number) {
   return blocco(ctx, `Volontari di ${cfg.organizers}`, { size, colore: C.red, color: '#fff', maxW: 960 });
 }
 
-export function disegnaStoriaTeam(ctx, a, sp, cfg) {
+export function disegnaStoriaTeam(ctx: Ctx, a: AssetCarta, sp: Soggetto, cfg: Cfg) {
   const f = FERMO;
   sfondo(ctx, f, a);
   testata(ctx, f, cfg, 290);
@@ -456,7 +527,7 @@ export function disegnaStoriaTeam(ctx, a, sp, cfg) {
   ]);
 }
 
-export function disegnaPostTeam(ctx, a, sp, cfg) {
+export function disegnaPostTeam(ctx: Ctx, a: AssetCarta, sp: Soggetto, cfg: Cfg) {
   const f = FERMO, [w] = LATO.post;
   sfondo(ctx, f, a, w, LATO.post[1]);
   testata(ctx, f, cfg, 90);
@@ -473,7 +544,7 @@ export function disegnaPostTeam(ctx, a, sp, cfg) {
   pezzo(ctx, f, 709, { x: w / 2, y: 1285 }, (c) => scritta(c, cfg.hashtag, { size: 30, font: MONO, weight: 700 }));
 }
 
-export function disegnaCaroselloTeam(ctx, i, a, sp, cfg) {
+export function disegnaCaroselloTeam(ctx: Ctx, i: number, a: AssetCarta, sp: Soggetto, cfg: Cfg) {
   const f = FERMO + i * 7, [w, h] = LATO.carosello;
   // copertina uguale a quella degli speaker
   if (i === 0) return disegnaCarosello(ctx, 0, a, sp, cfg);
@@ -524,7 +595,7 @@ export function disegnaCaroselloTeam(ctx, i, a, sp, cfg) {
 }
 
 // `carta`: se il kit usa la carta BizzyMagic o la foto del sito.
-export function captionTeam(sp, cfg, carta) {
+export function captionTeam(sp: Soggetto, cfg: Cfg, carta: boolean) {
   const gdg = sp.role.replace(/^Organizzat\w+\s+/i, '');
   const tags = [cfg.hashtag, '#DevFest', '#GDG', `#${gdg.replace(/\s+/g, '')}`, ...(carta ? ['#BizzyMagic'] : [])];
   const apertura = carta ? `🃏 ${KICKER}${sp.numero ? ` Carta ${sp.numero}:` : ''} ${sp.name}` : `🙌 Ti presentiamo il team: ${sp.name}`;

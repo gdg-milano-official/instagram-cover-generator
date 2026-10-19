@@ -1,54 +1,62 @@
 // Per ogni speaker: storia, post, carosello, reel e caption, con la carta
 // BizzyMagic (caricata nella sezione Carica carte, altrimenti da speaker.json)
-// oppure con la foto Sessionize (modo 'foto'). Tutto disegnato su canvas (reel.js / carte.js),
+// oppure con la foto Sessionize (modo 'foto'). Tutto disegnato su canvas (reel.ts / carte.ts),
 // niente html2canvas.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import JSZip from 'jszip';
-import { FPS, registraReel } from './reel.js';
-import { FRAMES_CARTA, LATO, SLIDE, captionAltra, captionCarta, captionKit, disegnaCarosello, disegnaPost, disegnaReelCarta, disegnaStoria, kitDa, preparaCarta } from './carte.js';
-import { save, slug } from './export.js';
-import { plainEvent } from './posts.js';
+import type JSZipT from 'jszip';
+import { FPS, registraReel } from './reel.ts';
+import { FRAMES_CARTA, LATO, SLIDE, captionAltra, captionCarta, captionKit, disegnaCarosello, disegnaPost, disegnaReelCarta, disegnaStoria, kitDa, preparaCarta } from './carte.ts';
+import { save, slug } from './export.ts';
+import type { AssetCarta, Immagine, KitCaricato, KitSpeaker, Modo, Soggetto } from './carte.ts';
+import { plainEvent } from './posts.ts';
+import type { Cfg } from './posts.ts';
+import type { Speaker } from './sessionize.ts';
 
 // Le immagini di uno speaker: nome del file e come disegnarla.
-const IMMAGINI = [
+const IMMAGINI: Immagine[] = [
   ['storia', 'storia', (c, a, sp, cfg) => disegnaStoria(c, a, sp, cfg)],
   ['post', 'post', (c, a, sp, cfg) => disegnaPost(c, a, sp, cfg)],
   ...Array.from({ length: SLIDE }, (_, i) =>
-    [`carosello-${i + 1}`, 'carosello', (c, a, sp, cfg) => disegnaCarosello(c, i, a, sp, cfg)])
+    [`carosello-${i + 1}`, 'carosello', (c, a, sp, cfg) => disegnaCarosello(c, i, a, sp, cfg)] satisfies Immagine)
 ];
 
-const cartella = (sp) => sp.foto ? slug(sp.name) : sp.numero ? `${sp.numero.slice(0, 3)}-${slug(sp.name)}` : `${sp.id.replace('carta-', '').padStart(3, '0')}-${slug(sp.name)}`;
+const cartella = (sp: Soggetto) => sp.foto ? slug(sp.name) : sp.numero ? `${sp.numero.slice(0, 3)}-${slug(sp.name)}` : `${sp.id.replace('carta-', '').padStart(3, '0')}-${slug(sp.name)}`;
 
-function tela(formato) {
+function tela(formato: Immagine[1]) {
   const c = document.createElement('canvas');
   [c.width, c.height] = LATO[formato];
   return c;
 }
 
 // JPEG e non PNG: la grana della carta fa pesare un PNG 3 MB, e Instagram ricomprime comunque.
-const jpg = (canvas) => new Promise((ok) => canvas.toBlob(ok, 'image/jpeg', 0.92));
+const jpg = (canvas: HTMLCanvasElement) => new Promise<Blob>((ok) => canvas.toBlob((b) => ok(b!), 'image/jpeg', 0.92));
 
-const modoDi = (sp) => (sp.foto ? 'foto' : 'carta');
+const modoDi = (sp: Soggetto): Modo => (sp.foto ? 'foto' : 'carta');
 
-async function anteprime(sp, cfg) {
-  const a = await preparaCarta(sp, modoDi(sp));
-  const out = [];
+interface Miniatura { nome: string; src: string }
+
+async function anteprime(sp: Soggetto, cfg: Cfg) {
+  const a: AssetCarta = await preparaCarta(sp, modoDi(sp));
+  const out: Miniatura[] = [];
   for (const [nome, formato, disegna] of IMMAGINI) {
     const grande = tela(formato);
-    disegna(grande.getContext('2d'), a, sp, cfg);
+    disegna(grande.getContext('2d')!, a, sp, cfg);
     const piccola = document.createElement('canvas');
     piccola.width = grande.width / 4;
     piccola.height = grande.height / 4;
-    piccola.getContext('2d').drawImage(grande, 0, 0, piccola.width, piccola.height);
+    piccola.getContext('2d')!.drawImage(grande, 0, 0, piccola.width, piccola.height);
     out.push({ nome, src: piccola.toDataURL('image/jpeg', 0.85) });
     await new Promise((r) => setTimeout(r));   // lascia respirare la pagina
   }
   return out;
 }
 
-function Speaker({ sp, cfg, caption, onCaption, onReel, occupato }) {
-  const [miniature, setMiniature] = useState([]);
+function Speaker({ sp, cfg, caption, onCaption, onReel, occupato }: {
+  sp: KitSpeaker; cfg: Cfg; caption: string; onCaption: (v: string) => void; onReel: () => void; occupato: boolean;
+}) {
+  const [miniature, setMiniature] = useState<Miniatura[]>([]);
   useEffect(() => {
     let attivo = true;
     anteprime(sp, cfg).then((m) => attivo && setMiniature(m));
@@ -106,12 +114,12 @@ function Speaker({ sp, cfg, caption, onCaption, onReel, occupato }) {
   );
 }
 
-async function aggiungiImmagini(zip, sp, cfg, caption) {
+async function aggiungiImmagini(zip: JSZipT, sp: Soggetto, cfg: Cfg, caption: string) {
   const a = await preparaCarta(sp, modoDi(sp));
-  const dir = zip.folder(cartella(sp));
+  const dir = zip.folder(cartella(sp))!;
   for (const [nome, formato, disegna] of IMMAGINI) {
     const c = tela(formato);
-    disegna(c.getContext('2d'), a, sp, cfg);
+    disegna(c.getContext('2d')!, a, sp, cfg);
     dir.file(`${nome}.jpg`, await jpg(c));
   }
   dir.file('caption.txt', caption);
@@ -119,17 +127,19 @@ async function aggiungiImmagini(zip, sp, cfg, caption) {
 
 // `modo` arriva dal percorso: /kit-social-speaker/carta o /kit-social-speaker/foto.
 // `caricato` sono le carte della sezione Carica carte gia' abbinate (kitCaricato).
-export default function Carte({ cfg, speakers, caricato, modo, onModo }) {
-  const dati = useQuery({
+export default function Carte({ cfg, speakers, caricato, modo, onModo }: {
+  cfg: Cfg; speakers: Speaker[]; caricato: KitCaricato; modo: Modo; onModo: (m: Modo) => void;
+}) {
+  const dati = useQuery<KitSpeaker[]>({
     queryKey: ['carte'],
     queryFn: async () => {
       const res = await fetch('/carte/speaker.json');
-      if (!res.ok) throw new Error('manca public/carte/speaker.json: lancia scripts/carte.mjs');
+      if (!res.ok) throw new Error('manca public/carte/speaker.json: lancia scripts/carte.ts');
       return res.json();
     },
     staleTime: Infinity
   });
-  const altre = useQuery({
+  const altre = useQuery<Soggetto[]>({
     queryKey: ['altre-carte'],
     queryFn: async () => {
       const res = await fetch('/carte/altre.json');
@@ -137,27 +147,28 @@ export default function Carte({ cfg, speakers, caricato, modo, onModo }) {
     },
     staleTime: Infinity
   });
-  const [captions, setCaptions] = useState({});
+  const [captions, setCaptions] = useState<Record<string, string>>({});
   const [avanzamento, setAvanzamento] = useState('');
-  const [inScena, setInScena] = useState(null);   // lo speaker del reel sul canvas
-  const canvas = useRef(null);
+  const [inScena, setInScena] = useState<Soggetto | null>(null);   // lo speaker del reel sul canvas
+  const canvas = useRef<HTMLCanvasElement>(null);
   const foto = modo === 'foto';
   const daFile = !foto && !caricato.vuoto;
   const kit = useMemo(() => kitDa(speakers), [speakers]);
-  const elenco = foto ? kit : daFile ? caricato.speaker : dati.data || [];
-  const captionDi = (sp) => captions[`${modo}:${sp.id}`] ?? (foto ? captionKit(sp, cfg) : captionCarta(sp, cfg));
+  const elenco: KitSpeaker[] = foto ? kit : daFile ? caricato.speaker : dati.data || [];
+  const captionDi = (sp: KitSpeaker) => captions[`${modo}:${sp.id}`] ?? (foto ? captionKit(sp, cfg) : captionCarta(sp, cfg));
   const suffisso = foto ? 'kit' : 'carte';
 
   // Registra un reel sul canvas visibile: MediaRecorder vuole un canvas che si aggiorna.
-  async function reel(sp) {
+  async function reel(sp: Soggetto) {
     setInScena(sp);
     const a = await preparaCarta(sp, modoDi(sp));
-    return registraReel(canvas.current, (f) => disegnaReelCarta(canvas.current.getContext('2d'), f, a, sp, cfg),
+    const tela = canvas.current!;
+    return registraReel(tela, (f) => disegnaReelCarta(tela.getContext('2d')!, f, a, sp, cfg),
       (f, n) => setAvanzamento(`Reel di ${sp.name}: ${Math.ceil(f / FPS)}/${n / FPS} s…`), FRAMES_CARTA);
   }
 
   const unReel = useMutation({
-    mutationFn: async (sp) => {
+    mutationFn: async (sp: Soggetto) => {
       const { blob, estensione } = await reel(sp);
       save(blob, `${cartella(sp)}-reel.${estensione}`);
     },
@@ -183,7 +194,7 @@ export default function Carte({ cfg, speakers, caricato, modo, onModo }) {
       const zip = new JSZip();
       for (const [i, sp] of elenco.entries()) {
         const { blob, estensione } = await reel(sp);
-        zip.folder(cartella(sp)).file(`reel.${estensione}`, blob);
+        zip.folder(cartella(sp))!.file(`reel.${estensione}`, blob);
         setAvanzamento(`Reel ${i + 1}/${elenco.length} fatti.`);
       }
       setAvanzamento('Comprimo lo ZIP…');
@@ -193,13 +204,13 @@ export default function Carte({ cfg, speakers, caricato, modo, onModo }) {
     onError: (e) => setAvanzamento(`Reel falliti: ${e.message}`)
   });
 
-  const elencoAltre = daFile ? caricato.altre : altre.data || [];
+  const elencoAltre: Soggetto[] = daFile ? caricato.altre : altre.data || [];
   const reelAltre = useMutation({
     mutationFn: async () => {
       const zip = new JSZip();
       for (const [i, c] of elencoAltre.entries()) {
         const { blob, estensione } = await reel(c);
-        const dir = zip.folder(cartella(c));
+        const dir = zip.folder(cartella(c))!;
         dir.file(`reel.${estensione}`, blob);
         dir.file('caption.txt', captionAltra(c, cfg));
         setAvanzamento(`Altre carte: ${i + 1}/${elencoAltre.length} reel fatti.`);
@@ -220,12 +231,12 @@ export default function Carte({ cfg, speakers, caricato, modo, onModo }) {
         setAvanzamento(`Speaker ${i + 1}/${elenco.length}: ${sp.name}, immagini…`);
         await aggiungiImmagini(zip, sp, cfg, captionDi(sp));
         const { blob, estensione } = await reel(sp);
-        zip.folder(cartella(sp)).file(`reel.${estensione}`, blob);
+        zip.folder(cartella(sp))!.file(`reel.${estensione}`, blob);
       }
       const altreDaFare = foto ? [] : elencoAltre;
       for (const [i, c] of altreDaFare.entries()) {
         const { blob, estensione } = await reel(c);
-        const dir = zip.folder('altre-carte').folder(cartella(c));
+        const dir = zip.folder('altre-carte')!.folder(cartella(c))!;
         dir.file(`reel.${estensione}`, blob);
         dir.file('caption.txt', captionAltra(c, cfg));
         setAvanzamento(`Altre carte: ${i + 1}/${altreDaFare.length} reel fatti.`);
@@ -245,7 +256,7 @@ export default function Carte({ cfg, speakers, caricato, modo, onModo }) {
   return (
     <>
       <nav className="sottosezioni">
-        {[['carta', '🃏 Con la carta'], ['foto', '📸 Da Sessionize (foto)']].map(([id, etichetta]) => (
+        {([['carta', '🃏 Con la carta'], ['foto', '📸 Da Sessionize (foto)']] as const).map(([id, etichetta]) => (
           <button key={id} type="button" aria-pressed={modo === id} disabled={occupato} onClick={() => {
             onModo(id);
             setAvanzamento('');

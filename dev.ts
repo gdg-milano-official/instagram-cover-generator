@@ -1,16 +1,16 @@
 // Un comando solo per lo sviluppo: Vite (hot reload della UI) piu' il server
-// Node in --watch (si riavvia da solo quando tocchi server.mjs).
+// Node in --watch (si riavvia da solo quando tocchi server.ts).
 import { spawn } from 'node:child_process';
 
 // In Docker il server sta sulla 8080; in locale quella porta e' spesso occupata
-// da altri progetti, quindi in sviluppo si sposta (deve combaciare con vite.config.js).
+// da altri progetti, quindi in sviluppo si sposta (deve combaciare con vite.config.ts).
 const PORT = process.env.PORT || '8091';
 
-const figli = [
-  ['backend', process.execPath, ['--env-file-if-exists=.env', '--watch', 'server.mjs']],
+const figli = ([
+  ['backend', process.execPath, ['--env-file-if-exists=.env', '--watch', 'server.ts']],
   ['vite', process.execPath, ['node_modules/vite/bin/vite.js']]
-].map(([nome, comando, argomenti]) => {
-  const figlio = spawn(comando, argomenti, { stdio: 'inherit', env: { ...process.env, PORT } });
+] as const).map(([nome, comando, argomenti]) => {
+  const figlio = spawn(comando, [...argomenti], { stdio: 'inherit', env: { ...process.env, PORT } });
   figlio.on('error', (e) => console.error(`[${nome}]`, e.message));
   return figlio;
 });

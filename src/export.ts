@@ -1,8 +1,10 @@
 import html2canvas from 'html2canvas';
 import JSZip from 'jszip';
-import { plainEvent } from './posts.js';
+import { plainEvent } from './posts.ts';
+import type { Cfg, Post } from './posts.ts';
+import type { Speaker } from './sessionize.ts';
 
-export const slug = (s) =>
+export const slug = (s: string) =>
   s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -10,17 +12,19 @@ export const slug = (s) =>
 // dimensione finale e' solo un fattore di scala. Instagram e Facebook rendono
 // meglio in verticale 4:5, LinkedIn in quadrato.
 export const LATO_CSS = 600;
-export const FORMATI = [
+export interface Formato { id: string; nome: string; w: number; h: number }
+
+export const FORMATI: Formato[] = [
   { id: 'instagram', nome: 'Instagram', w: 1080, h: 1350 },
   { id: 'facebook', nome: 'Facebook', w: 1080, h: 1350 },
   { id: 'linkedin', nome: 'LinkedIn', w: 1200, h: 1200 }
 ];
-export const altezzaCss = ({ w, h }) => Math.round((LATO_CSS * h) / w);
+export const altezzaCss = ({ w, h }: Formato) => Math.round((LATO_CSS * h) / w);
 
-export const pngName = (cfg, nome, scuro, f) =>
+export const pngName = (cfg: Cfg, nome: string, scuro: boolean, f: Formato) =>
   `${slug(plainEvent(cfg))}-${slug(nome)}-${f.id}-${f.w}x${f.h}${scuro ? '-dark' : ''}.png`;
 
-export async function renderCard(cardEl, formato = FORMATI[0]) {
+export async function renderCard(cardEl: HTMLElement, formato = FORMATI[0]) {
   await document.fonts.ready;
   const alto = altezzaCss(formato);
   cardEl.classList.add('exporting');   // nasconde i segnaposto dei campi vuoti
@@ -38,7 +42,7 @@ export async function renderCard(cardEl, formato = FORMATI[0]) {
   }
 }
 
-export function save(blob, filename) {
+export function save(blob: Blob, filename: string) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = filename;
@@ -46,13 +50,14 @@ export function save(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
-const esc = (s) =>
-  String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ENTITA: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+const esc = (s: unknown) =>
+  String(s ?? '').replace(/[&<>"]/g, (c) => ENTITA[c]);
 
 // .doc in HTML: Word lo apre nativamente e costa dieci righe invece di un
 // generatore OOXML. Da Word si fa "salva come .docx" se serve il formato vero.
-export function wordDoc(blocchi, cfg) {
-  const par = (t) => esc(t).split('\n').map((r) => `<p>${r || '&nbsp;'}</p>`).join('');
+export function wordDoc(blocchi: (Speaker & Post)[], cfg: Cfg) {
+  const par = (t: string) => esc(t).split('\n').map((r) => `<p>${r || '&nbsp;'}</p>`).join('');
   const corpo = blocchi.map((b) => `
     <h1>${esc(b.name)}</h1>
     <p><i>${esc(b.role)}</i>${b.room ? ` &mdash; ${esc(b.room)}` : ''}</p>
@@ -67,14 +72,18 @@ export function wordDoc(blocchi, cfg) {
 }
 
 // Una cartella per piattaforma, con dentro la locandina di ogni speaker.
-export async function esportaTutto({ voci, cfg, scuro, onProgress }) {
+export interface Voce { speaker: Speaker; post: Post; card: HTMLElement }
+
+export async function esportaTutto({ voci, cfg, scuro, onProgress }: {
+  voci: Voce[]; cfg: Cfg; scuro: boolean; onProgress?: (i: number, n: number) => void;
+}) {
   const zip = new JSZip();
-  const blocchi = [];
+  const blocchi: (Speaker & Post)[] = [];
   for (const [i, voce] of voci.entries()) {
     onProgress?.(i + 1, voci.length);
     for (const f of FORMATI) {
       const canvas = await renderCard(voce.card, f);
-      zip.folder(f.id).file(pngName(cfg, voce.speaker.name, scuro, f),
+      zip.folder(f.id)!.file(pngName(cfg, voce.speaker.name, scuro, f),
         canvas.toDataURL('image/png').split(',')[1], { base64: true });
     }
     blocchi.push({ ...voce.speaker, ...voce.post });

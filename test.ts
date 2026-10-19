@@ -1,6 +1,12 @@
-// node test.mjs — controlla il mapping del payload Sessionize "view/All".
+// node test.ts — controlla il mapping del payload Sessionize "view/All".
 import assert from 'node:assert';
-import { mapSpeakers, topicTags } from './src/sessionize.js';
+import { mapSpeakers, topicTags } from './src/sessionize.ts';
+import type { Speaker } from './src/sessionize.ts';
+import type { Cfg } from './src/posts.ts';
+import type { KitSpeaker, Soggetto } from './src/carte.ts';
+
+// Le fixture riempiono solo i campi che servono al caso.
+const cfg = (c: Partial<Cfg>) => c as Cfg;
 
 // In "view/All" gli id sessione sono stringhe, quelli dentro speaker.sessions numeri.
 const payload = {
@@ -53,7 +59,7 @@ assert.strictEqual(lunga.roleFull.length, 95);
 assert.strictEqual(zoe.abstract, 'Un giro su MCP.');
 
 // Talk o workshop: nei dati non c'e' un flag, si deduce da sala e durata.
-import { tipoSessione } from './src/sessionize.js';
+import { tipoSessione } from './src/sessionize.ts';
 assert.strictEqual(zoe.kind, 'Talk', 'senza orari e fuori dalla sala workshop resta un talk');
 assert.strictEqual(tipoSessione({ startsAt: '2026-10-10T09:30:00', endsAt: '2026-10-10T11:00:00' }, 'Nexus'),
   'Workshop', '90 minuti sono un workshop anche in sala normale');
@@ -73,45 +79,45 @@ assert.strictEqual(mapSpeakers({
 }).length, 1, 'una sessione confermata a mano entra anche se Sessionize dice di no');
 
 // Motore dei reel e kit social sponsors
-import { FRAMES, FPS, PARTNER, posa } from './src/reel.js';
+import { FRAMES, FPS, PARTNER, posa } from './src/reel.ts';
 
 assert.strictEqual(FRAMES / FPS, 16, 'reel di 16 secondi');
 assert.strictEqual(posa(4, { in: 5 }), null, 'prima di entrare il pezzo non c’e’');
-assert.deepStrictEqual(posa(8, { in: 5, da: [0, -100] }).map((v) => Math.round(v) + 0), [0, 0], 'dopo dur scatti e’ in posizione');
+assert.deepStrictEqual(posa(8, { in: 5, da: [0, -100] })!.map((v) => Math.round(v) + 0), [0, 0], 'dopo dur scatti e’ in posizione');
 assert.strictEqual(posa(40, { in: 5, out: 36 }), null, 'dopo l’uscita sparisce');
 for (const [id, p] of Object.entries(PARTNER)) {
   assert.strictEqual(p.immagini.length, 3, `${id}: tre immagini, una per post-it`);
   assert.deepStrictEqual(Object.keys(p.testi), Object.keys(PARTNER.bizzynow.testi), `${id}: stessi campi di testo`);
-  assert.ok(p.caption({ eventName: 'DevFest Milano 2026', hashtag: '#DevFestMilano' }).includes('#DevFestMilano'));
+  assert.ok(p.caption(cfg({ eventName: 'DevFest Milano 2026', hashtag: '#DevFestMilano' })).includes('#DevFestMilano'));
 }
 console.log('ok — reel');
 
 // Kit social speaker
-import { captionAltra, captionCarta, captionKit, estratto, kitDa } from './src/carte.js';
+import { captionAltra, captionCarta, captionKit, estratto, kitDa } from './src/carte.ts';
 
 assert.strictEqual(estratto('Breve.'), 'Breve.');
 assert.strictEqual(estratto('Prima frase. Seconda frase molto lunga.', 15), 'Prima frase.', 'taglia a fine frase');
 assert.ok(estratto('una sola frase senza punto che non finisce mai', 20).endsWith('…'));
 const cap = captionCarta({ name: 'Ada Verdi', role: 'GDE', numero: '006/058', kind: 'Workshop', talk: 'Agenti con ADK',
-  abstract: 'Agentic AI con Gemini.', ora: '09:30–11:00', room: 'Workshop', coSpeaker: ['Bea Neri'] },
-  { eventName: 'DevFest Milano 2026', hashtag: '#DevFestMilano' });
+  abstract: 'Agentic AI con Gemini.', ora: '09:30–11:00', room: 'Workshop', coSpeaker: ['Bea Neri'] } as KitSpeaker,
+  cfg({ eventName: 'DevFest Milano 2026', hashtag: '#DevFestMilano' }));
 assert.ok(cap.includes('il workshop "Agenti con ADK"') && cap.includes('insieme a Bea Neri') && cap.includes('#AIAgents'));
-const altra = captionAltra({ name: 'Datwave', gruppo: 'partner', numero: '004/058' }, { eventName: 'DevFest Milano 2026', hashtag: '#DevFestMilano' });
+const altra = captionAltra({ name: 'Datwave', gruppo: 'partner', numero: '004/058' } as Soggetto, cfg({ eventName: 'DevFest Milano 2026', hashtag: '#DevFestMilano' }));
 assert.ok(altra.includes('Carta 004/058: Datwave') && altra.includes('partner della DevFest'));
-assert.ok(!captionAltra({ name: 'Agent Swarm', gruppo: 'collezione', numero: '' }, { hashtag: '#X' }).includes('Carta :'), 'senza numero niente "Carta"');
+assert.ok(!captionAltra({ name: 'Agent Swarm', gruppo: 'collezione', numero: '' } as Soggetto, cfg({ hashtag: '#X' })).includes('Carta :'), 'senza numero niente "Carta"');
 const kit = kitDa([
   { id: 'demo', name: 'Demo', talk: 'x' },
   { id: '1', name: 'Bea', talk: 'Agenti', photo: '/img/b.png', inizio: '2026-10-10T11:30:00', fine: '2026-10-10T12:15:00', kind: 'Talk', room: 'Nexus' },
   { id: '2', name: 'Ada', talk: 'Agenti', photo: '/img/a.png', inizio: '2026-10-10T11:30:00', fine: '2026-10-10T12:15:00', kind: 'Talk', room: 'Nexus' }
-]);
+] as Speaker[]);
 assert.deepStrictEqual(kit.map((s) => [s.name, s.ora, s.coSpeaker]), [['Ada', '11:30–12:15', ['Bea']], ['Bea', '11:30–12:15', ['Ada']]], 'niente demo, ora locale, co-speaker');
-assert.ok(captionKit(kit[0], { eventName: 'DevFest Milano 2026', hashtag: '#DevFestMilano' }).startsWith("🎤 Sabato sul palco c'è Ada!"));
+assert.ok(captionKit(kit[0], cfg({ eventName: 'DevFest Milano 2026', hashtag: '#DevFestMilano' })).startsWith("🎤 Sabato sul palco c'è Ada!"));
 assert.strictEqual(tipoSessione({ title: 'UI Generativa', startsAt: '2026-10-10T09:30:00', endsAt: '2026-10-10T11:00:00' }, 'Secret Track'), 'Masterclass');
 assert.strictEqual(tipoSessione({ title: 'The Bug Bash Playbook', startsAt: '2026-10-10T11:30:00', endsAt: '2026-10-10T11:50:00' }, 'Secret Track'), 'Talk', 'i 20 minuti in Secret Track sono talk');
 console.log('ok — kit social speaker');
 
 // Carte caricate dalla UI: nome e numero dal file, abbinamento per nome o a mano.
-const { cartaDaFile, abbinamenti, kitCaricato } = await import('./src/carte.js');
+const { cartaDaFile, abbinamenti, kitCaricato } = await import('./src/carte.ts');
 assert.deepStrictEqual(cartaDaFile('07.Emanuele_Villa (holo).png'), { file: '07.Emanuele_Villa (holo).png', numero: '07', nome: 'Emanuele Villa' });
 assert.strictEqual(cartaDaFile('Giulia Neri.jpg').nome, 'Giulia Neri');
 const carte = ['07.Zoe_Bianchi.png', '12.Ada_Verdi (1).png', '30.Altra_Carta.png'].map((f) => ({ ...cartaDaFile(f), url: f }));
@@ -124,7 +130,7 @@ const k = kitCaricato(sps, carte, {});
 assert.strictEqual(k.speaker[0].numero, '007/030');
 assert.strictEqual(k.speaker[0].foto, '');
 assert.deepStrictEqual(k.altre.map((c) => c.name), ['Altra Carta']);
-const { gruppoDi } = await import('./src/carte.js');
+const { gruppoDi } = await import('./src/carte.ts');
 assert.strictEqual(gruppoDi('Google'), 'partner');
 assert.strictEqual(gruppoDi('Altra Carta'), 'collezione');
 const persone = {
