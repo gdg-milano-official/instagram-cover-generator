@@ -1,3 +1,5 @@
+import { FORMATI, altezzaCss } from './export.js';
+
 // La locandina. Ogni testo e' modificabile a mano: contentEditable non
 // controllato, l'eventuale modifica sale al parent sul blur.
 const initials = (name) =>
@@ -39,9 +41,10 @@ function Campo({ className, style, valore, onChange }) {
   );
 }
 
-export default function Card({ innerRef, speaker, cfg, onChange }) {
+export default function Card({ innerRef, speaker, cfg, onChange, formato = FORMATI[0] }) {
   return (
-    <div className="card" ref={innerRef}>
+    <div className={`card${formato.h > formato.w ? ' verticale' : ''}`} ref={innerRef}
+      style={{ height: altezzaCss(formato) }}>
       <div className="accent-bar" />
 
       <div className="header">

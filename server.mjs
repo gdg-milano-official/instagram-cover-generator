@@ -149,6 +149,9 @@ async function statico(percorso, res) {
     res.writeHead(200, { 'content-type': TIPI[extname(file)] || 'application/octet-stream' });
     res.end(contenuto);
   } catch {
+    // le sezioni dell'app (/speaker, /kit-social-speaker/foto) non sono file:
+    // senza estensione rispondo con la pagina e il percorso lo legge la UI
+    if (!extname(rel) && rel !== '/') return statico('/', res);
     json(res, 404, { errore: 'non trovato' });
   }
 }

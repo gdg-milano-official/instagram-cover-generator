@@ -1,18 +1,48 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import Card from './Card.jsx';
+import Carte from './Carte.jsx';
+import CaricaCarte, { useCarteCaricate } from './CaricaCarte.jsx';
+import Persone, { usePersone } from './Persone.jsx';
+import Sponsor from './Sponsor.jsx';
+import Team from './Team.jsx';
+import { kitCaricato, kitDa } from './carte.js';
 import { DEMO, fetchSpeakers } from './sessionize.js';
 import { generaConAI, instagramPost, linkedinPost, plainEvent } from './posts.js';
-import { MISURE, esportaTutto, pngName, renderCard, save } from './export.js';
+import { FORMATI, esportaTutto, pngName, renderCard, save } from './export.js';
 
 const DEFAULTS = {
-  apiId: '',
+  apiId: 'qcrth74k',
   eventName: 'DevFest Milano 2026',
   organizers: 'GDG Cloud Milano & GDG Milano',
   place: 'Milano | 10 Ottobre 2026',
   hashtag: '#DevFestMilano',
   ticketUrl: 'https://2026.devfestmilano.it'
 };
+
+// Sezione e sottosezione stanno nel percorso (/kit-social-speaker/foto): un link
+// apre il tab giusto e avanti/indietro del browser funzionano.
+const SEZIONI = [['organizzatori-sponsor', '👥 Organizzatori e sponsor'], ['carte', '📤 Carica carte'], ['speaker', '🎤 Locandine speaker'], ['kit-social-speaker', '🃏 Kit social speaker'], ['kit-social-sponsors', '🤝 Kit social sponsors'], ['kit-social-organizzatori', '🙌 Kit social organizzatori']];
+
+const leggiPercorso = () => location.pathname.split('/').filter(Boolean);
+
+function usePercorso() {
+  const [parti, setParti] = useState(leggiPercorso);
+  useEffect(() => {
+    const aggiorna = () => setParti(leggiPercorso());
+    addEventListener('popstate', aggiorna);
+    return () => removeEventListener('popstate', aggiorna);
+  }, []);
+  // la query (?api=...) resta: cambiare tab non deve cambiare evento
+  const vai = (...nuove) => {
+    history.pushState(null, '', `/${nuove.join('/')}${location.search}`);
+    setParti(nuove);
+  };
+  return [parti, vai];
+}
+
+// Instagram e Facebook hanno lo stesso formato: in anteprima basta una voce.
+const ANTEPRIME = [['instagram', '4:5 · Instagram e Facebook'], ['linkedin', '1:1 · LinkedIn']];
 
 const CAMPI = [
   ['apiId', 'Sessionize API ID', 'es. 4qmcvnlr'],
@@ -38,7 +68,7 @@ async function inParallelo(elementi, quanti, lavoro) {
   await Promise.all(Array.from({ length: Math.min(quanti, elementi.length) }, operaio));
 }
 
-function Speaker({ speaker, post, cfg, prompt, lato, aiAttiva, onCampo, onPost, registra }) {
+function Speaker({ speaker, post, cfg, prompt, anteprima, aiAttiva, onCampo, onPost, registra }) {
   const cardRef = useRef(null);
 
   const ai = useMutation({
@@ -47,10 +77,10 @@ function Speaker({ speaker, post, cfg, prompt, lato, aiAttiva, onCampo, onPost, 
   });
 
   const scarica = useMutation({
-    mutationFn: async () => {
-      const canvas = await renderCard(cardRef.current, lato);
+    mutationFn: async (formato) => {
+      const canvas = await renderCard(cardRef.current, formato);
       await new Promise((r) => canvas.toBlob((b) => {
-        save(b, pngName(cfg, speaker.name, document.body.classList.contains('dark'), lato));
+        save(b, pngName(cfg, speaker.name, document.body.classList.contains('dark'), formato));
         r();
       }));
     }
@@ -63,11 +93,17 @@ function Speaker({ speaker, post, cfg, prompt, lato, aiAttiva, onCampo, onPost, 
     <section className={`speaker${ai.isPending ? ' occupato' : ''}`}>
       <div className="card-col">
         <div className="card-scroll">
-          <Card innerRef={cardRef} speaker={speaker} cfg={cfg} onChange={onCampo} />
+          <Card innerRef={cardRef} speaker={speaker} cfg={cfg} onChange={onCampo}
+            formato={FORMATI.find((f) => f.id === anteprima)} />
         </div>
-        <button onClick={() => scarica.mutate()} disabled={scarica.isPending}>
-          {scarica.isPending ? 'Preparo il PNG…' : `⬇︎ Scarica PNG ${lato}×${lato}`}
-        </button>
+        <div className="card-download">
+          {FORMATI.map((f) => (
+            <button key={f.id} className="ghost" onClick={() => scarica.mutate(f)} disabled={scarica.isPending}>
+              {scarica.isPending && scarica.variables === f ? 'Preparo…' : `⬇︎ ${f.nome}`}
+              <small>{f.w}×{f.h}</small>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="posts">
@@ -106,7 +142,14 @@ export default function App() {
   const [scuro, setScuro] = useState(() => localStorage.getItem('devfest-theme') === 'dark');
   const [avanzamento, setAvanzamento] = useState('');
   const [prompt, setPrompt] = useState(() => localStorage.getItem('devfest-prompt') || '');
-  const [lato, setLato] = useState(() => Number(localStorage.getItem('devfest-lato')) || 1080);
+  const [anteprima, setAnteprima] = useState(() =>
+    localStorage.getItem('devfest-anteprima') === 'linkedin' ? 'linkedin' : 'instagram');
+  const [[sezione, sotto], vai] = usePercorso();
+  // Qui e non nelle sezioni: carte e anagrafica le usano anche i kit.
+  const carte = useCarteCaricate();
+  const persone = usePersone();
+  // percorso sconosciuto o radice: gli speaker
+  const vista = SEZIONI.some(([id]) => id === sezione) ? sezione : 'speaker';
 
   // Stato modificabile, tenuto qui e non nelle card: serve per esportarlo tutto
   // insieme e, soprattutto, per poterlo riempire da un file importato.
@@ -130,6 +173,9 @@ export default function App() {
     queryFn: () => (cfg.apiId ? fetchSpeakers(cfg.apiId) : DEMO),
     staleTime: 5 * 60 * 1000
   });
+  const kitSpeaker = useMemo(() => kitDa(speakers.data || []), [speakers.data]);
+  const caricato = useMemo(() => kitCaricato(kitSpeaker, carte.carte, carte.scelte, persone.persone),
+    [kitSpeaker, carte.carte, carte.scelte, persone.persone]);
 
   const elenco = useMemo(() => {
     const q = filtro.trim().toLowerCase();
@@ -164,10 +210,9 @@ export default function App() {
       voci: visibili(),
       cfg,
       scuro,
-      lato,
       onProgress: (i, n) => setAvanzamento(`Preparo ${i}/${n}…`)
     }),
-    onSuccess: () => setAvanzamento(`${elenco.length} locandine + testi nello ZIP.`)
+    onSuccess: () => setAvanzamento(`${elenco.length} speaker × ${FORMATI.length} formati + testi nello ZIP.`)
   });
 
   /* ---------- Esporta / importa il lavoro fatto ---------- */
@@ -242,79 +287,122 @@ export default function App() {
                 onChange={(e) => setBozza({ ...bozza, [nome]: e.target.value })} />
             </label>
           ))}
-          <label>
-            Dimensione PNG
-            <select value={lato} onChange={(e) => {
-              setLato(Number(e.target.value));
-              localStorage.setItem('devfest-lato', e.target.value);
-            }}>
-              {MISURE.map((m) => <option key={m} value={m}>{m}×{m}</option>)}
-            </select>
-          </label>
-
           <div className="actions">
             <button type="submit">Carica speaker</button>
-            {stato.data?.ai && (
-              <button type="button" onClick={() => generaTutti.mutate()} disabled={occupato}>
-                ✨ Genera tutti i testi con AI
-              </button>
-            )}
-            <button type="button" className="ghost" onClick={() => zip.mutate()} disabled={occupato}>
-              📦 Scarica tutto (ZIP)
-            </button>
-            <button type="button" className="ghost" onClick={esportaTesti} disabled={!elenco.length}>
-              ⬇︎ Esporta testi
-            </button>
-            <label className="importa ghost">
-              ⬆︎ Importa testi
-              <input type="file" accept="application/json,.json"
-                onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) importaTesti(f); }} />
-            </label>
             <button type="button" className="ghost" onClick={() => setScuro((v) => !v)}>
               {scuro ? '☀️ Chiaro' : '🌙 Scuro'}
             </button>
           </div>
         </form>
 
-        {stato.data?.ai && (
-          <details className="prompt" open={Boolean(prompt)}>
-            <summary>✨ Prompt di generazione {prompt ? '(personalizzato)' : '(predefinito)'}</summary>
-            <textarea
-              value={prompt || stato.data.promptDefault || ''}
-              onChange={(e) => {
-                setPrompt(e.target.value);
-                localStorage.setItem('devfest-prompt', e.target.value);
-              }}
-            />
-            <div className="prompt-azioni">
-              <button type="button" className="ghost" disabled={!prompt}
-                onClick={() => { setPrompt(''); localStorage.removeItem('devfest-prompt'); }}>
-                Ripristina il predefinito
-              </button>
-              <span className="nota">Vale per "Rigenera con AI" e per la generazione in blocco.</span>
-            </div>
-          </details>
-        )}
-
-        <div className="filterbar">
-          <input value={filtro} placeholder="Filtra per nome, talk, sala o hashtag…"
-            onChange={(e) => setFiltro(e.target.value)} />
-          <span className={`status${occupato ? ' in-corso' : ''}${speakers.isError ? ' error' : ''}`}>
-            {messaggio}
-          </span>
-        </div>
+        <nav className="sezioni">
+          {SEZIONI.map(([id, etichetta]) => (
+            <button key={id} type="button" aria-current={vista === id ? 'page' : undefined}
+              onClick={() => vai(id)}>{etichetta}</button>
+          ))}
+        </nav>
       </header>
 
       <main>
-        {speakers.isPending
-          ? [0, 1].map((i) => <section className="speaker scheletro" key={i} />)
-          : elenco.map((sp) => (
-              <Speaker key={sp.id} speaker={sp} post={postDi(sp)} cfg={cfg} prompt={prompt}
-                lato={lato} aiAttiva={Boolean(stato.data?.ai)}
-                onCampo={(patch) => setModifiche((m) => ({ ...m, [sp.id]: { ...m[sp.id], ...patch } }))}
-                onPost={(nuovi) => setTesti((t) => ({ ...t, [sp.id]: nuovi }))}
-                registra={(id, voce) => righe.current.set(id, voce)} />
-            ))}
+        {vista === 'carte'
+          ? <CaricaCarte speakers={kitSpeaker} persone={persone.persone} {...carte}
+              onKit={() => vai('kit-social-speaker', 'carta')} onPersone={() => vai('organizzatori-sponsor')} />
+          : vista === 'organizzatori-sponsor'
+          ? <Persone {...persone} onCarte={() => vai('carte')} />
+          : vista === 'kit-social-speaker'
+          ? <Carte cfg={cfg} speakers={speakers.data || []} caricato={caricato}
+              modo={sotto === 'foto' ? 'foto' : 'carta'} onModo={(m) => vai('kit-social-speaker', m)} />
+          : vista === 'kit-social-sponsors'
+          ? <Sponsor cfg={cfg} />
+          : vista === 'kit-social-organizzatori'
+          ? <Team cfg={cfg} team={caricato.team} modo={sotto === 'foto' ? 'foto' : 'carta'} onModo={(m) => vai('kit-social-organizzatori', m)} />
+          : <>
+            {/* Header uguale in ogni sezione: gli strumenti delle locandine stanno qui,
+                nello stesso pannello che il kit usa per i suoi download. */}
+            <section className="speaker download">
+              <div className="giorno-head">
+                <span className="giorno-data">⬇︎ Download</span>
+                <h2>Scarica le locandine</h2>
+                <span className="giorno-formato">PNG per Instagram, Facebook e LinkedIn e testi dei post</span>
+              </div>
+
+              <div className="campo">
+                Anteprima
+                <nav className="sottosezioni">
+                  {ANTEPRIME.map(([id, etichetta]) => (
+                    <button key={id} type="button" aria-pressed={anteprima === id} onClick={() => {
+                      setAnteprima(id);
+                      localStorage.setItem('devfest-anteprima', id);
+                    }}>{etichetta}</button>
+                  ))}
+                </nav>
+              </div>
+
+              <div className="download-voci">
+                <button className="download-voce download-tutto" onClick={() => zip.mutate()} disabled={occupato || !elenco.length}>
+                  <strong>📦 Tutte le locandine + testi</strong>
+                  <span>{FORMATI.map((f) => `${f.nome} ${f.w}×${f.h}`).join(' · ')} per {elenco.length} speaker, più testi-post.doc · ZIP</span>
+                </button>
+                {stato.data?.ai && (
+                  <button className="download-voce ghost" onClick={() => generaTutti.mutate()} disabled={occupato || !elenco.length}>
+                    <strong>✨ Genera tutti i testi con AI</strong>
+                    <span>riscrive Instagram e LinkedIn, tre speaker alla volta</span>
+                  </button>
+                )}
+                <button className="download-voce ghost" onClick={esportaTesti} disabled={!elenco.length}>
+                  <strong>⬇︎ Esporta testi</strong>
+                  <span>salva testi e modifiche in JSON</span>
+                </button>
+                <label className="download-voce importa">
+                  <strong>⬆︎ Importa testi</strong>
+                  <span>riprendi da un export JSON</span>
+                  <input type="file" accept="application/json,.json"
+                    onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) importaTesti(f); }} />
+                </label>
+              </div>
+
+              {stato.data?.ai && (
+                <details className="prompt" open={Boolean(prompt)}>
+                  <summary>✨ Prompt di generazione {prompt ? '(personalizzato)' : '(predefinito)'}</summary>
+                  <textarea
+                    value={prompt || stato.data.promptDefault || ''}
+                    onChange={(e) => {
+                      setPrompt(e.target.value);
+                      localStorage.setItem('devfest-prompt', e.target.value);
+                    }}
+                  />
+                  <div className="prompt-azioni">
+                    <button type="button" className="ghost" disabled={!prompt}
+                      onClick={() => { setPrompt(''); localStorage.removeItem('devfest-prompt'); }}>
+                      Ripristina il predefinito
+                    </button>
+                    <span className="nota">Vale per "Rigenera con AI" e per la generazione in blocco.</span>
+                  </div>
+                </details>
+              )}
+
+              <p className={`status${occupato ? ' in-corso' : ''}${speakers.isError ? ' error' : ''}`}>
+                {messaggio}
+              </p>
+            </section>
+
+            <div className="sezione-titolo">
+              <h2>Speaker uno per uno</h2>
+              <span>locandina e testi del singolo speaker</span>
+              <input value={filtro} placeholder="Filtra per nome, talk, sala o hashtag…"
+                onChange={(e) => setFiltro(e.target.value)} />
+            </div>
+
+            {speakers.isPending
+              ? [0, 1].map((i) => <section className="speaker scheletro" key={i} />)
+              : elenco.map((sp) => (
+                  <Speaker key={sp.id} speaker={sp} post={postDi(sp)} cfg={cfg} prompt={prompt}
+                    anteprima={anteprima} aiAttiva={Boolean(stato.data?.ai)}
+                    onCampo={(patch) => setModifiche((m) => ({ ...m, [sp.id]: { ...m[sp.id], ...patch } }))}
+                    onPost={(nuovi) => setTesti((t) => ({ ...t, [sp.id]: nuovi }))}
+                    registra={(id, voce) => righe.current.set(id, voce)} />
+                ))}
+          </>}
       </main>
     </>
   );

@@ -2,22 +2,37 @@ import html2canvas from 'html2canvas';
 import JSZip from 'jszip';
 import { plainEvent } from './posts.js';
 
-const slug = (s) =>
+export const slug = (s) =>
   s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-// La locandina e' 600x600 nel DOM: la dimensione finale e' solo un fattore di scala.
+// La locandina e' larga 600 nel DOM e alta in proporzione al formato: la
+// dimensione finale e' solo un fattore di scala. Instagram e Facebook rendono
+// meglio in verticale 4:5, LinkedIn in quadrato.
 export const LATO_CSS = 600;
-export const MISURE = [1080, 1350, 1620, 2160];
+export const FORMATI = [
+  { id: 'instagram', nome: 'Instagram', w: 1080, h: 1350 },
+  { id: 'facebook', nome: 'Facebook', w: 1080, h: 1350 },
+  { id: 'linkedin', nome: 'LinkedIn', w: 1200, h: 1200 }
+];
+export const altezzaCss = ({ w, h }) => Math.round((LATO_CSS * h) / w);
 
-export const pngName = (cfg, nome, scuro, lato) =>
-  `${slug(plainEvent(cfg))}-${slug(nome)}-${lato}${scuro ? '-dark' : ''}.png`;
+export const pngName = (cfg, nome, scuro, f) =>
+  `${slug(plainEvent(cfg))}-${slug(nome)}-${f.id}-${f.w}x${f.h}${scuro ? '-dark' : ''}.png`;
 
-export async function renderCard(cardEl, lato = 1080) {
+export async function renderCard(cardEl, formato = FORMATI[0]) {
   await document.fonts.ready;
+  const alto = altezzaCss(formato);
   cardEl.classList.add('exporting');   // nasconde i segnaposto dei campi vuoti
   try {
-    return await html2canvas(cardEl, { scale: lato / LATO_CSS, useCORS: true, backgroundColor: null });
+    return await html2canvas(cardEl, {
+      scale: formato.w / LATO_CSS, width: LATO_CSS, height: alto, useCORS: true, backgroundColor: null,
+      // il formato cambia solo nella copia che html2canvas disegna: in pagina resta l'anteprima scelta
+      onclone: (_doc, copia) => {
+        copia.style.height = `${alto}px`;
+        copia.classList.toggle('verticale', formato.h > formato.w);
+      }
+    });
   } finally {
     cardEl.classList.remove('exporting');
   }
@@ -51,17 +66,20 @@ export function wordDoc(blocchi, cfg) {
     { type: 'application/msword' });
 }
 
-export async function esportaTutto({ voci, cfg, scuro, lato = 1080, onProgress }) {
+// Una cartella per piattaforma, con dentro la locandina di ogni speaker.
+export async function esportaTutto({ voci, cfg, scuro, onProgress }) {
   const zip = new JSZip();
   const blocchi = [];
   for (const [i, voce] of voci.entries()) {
     onProgress?.(i + 1, voci.length);
-    const canvas = await renderCard(voce.card, lato);
-    zip.file(pngName(cfg, voce.speaker.name, scuro, lato),
-      canvas.toDataURL('image/png').split(',')[1], { base64: true });
+    for (const f of FORMATI) {
+      const canvas = await renderCard(voce.card, f);
+      zip.folder(f.id).file(pngName(cfg, voce.speaker.name, scuro, f),
+        canvas.toDataURL('image/png').split(',')[1], { base64: true });
+    }
     blocchi.push({ ...voce.speaker, ...voce.post });
   }
   zip.file('testi-post.doc', wordDoc(blocchi, cfg));
   save(await zip.generateAsync({ type: 'blob' }),
-    `${slug(plainEvent(cfg))}-${lato}${scuro ? '-dark' : ''}.zip`);
+    `${slug(plainEvent(cfg))}-locandine${scuro ? '-dark' : ''}.zip`);
 }

@@ -40,7 +40,7 @@ body {
 
 /* ---------- Chrome dell'app ---------- */
 
-.topbar { max-width: 1180px; margin: 0 auto 28px; }
+.topbar { margin: 0 auto 28px; }
 .topbar h1 { font-family: var(--display); font-size: 24px; font-weight: 800; letter-spacing: -.6px; margin-bottom: 18px; }
 
 .config {
@@ -53,7 +53,7 @@ body {
   padding: 20px;
 }
 
-.config label { display: flex; flex-direction: column; gap: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+.config label, .campo { display: flex; flex-direction: column; gap: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
 .config label input { margin-top: auto; }
 .config small { text-transform: none; letter-spacing: 0; opacity: .7; }
 
@@ -84,12 +84,10 @@ button.ghost { background: var(--card); color: var(--fg); border: 1px solid var(
 button:hover { filter: brightness(1.05); }
 button:disabled { opacity: .5; cursor: wait; }
 
-.filterbar { display: flex; gap: 14px; align-items: center; margin-top: 14px; }
-.filterbar input { flex: 1; }
 .status { font: 500 11px var(--mono); letter-spacing: .5px; color: var(--muted); white-space: nowrap; }
 .status.error { color: var(--red); }
 
-main { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+main { margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
 
 .speaker {
   display: flex;
@@ -110,7 +108,7 @@ textarea { width: 100%; min-height: 200px; font: 400 13px/1.55 var(--body); resi
 .card-col { display: flex; flex-direction: column; gap: 14px; }
 .card-scroll { overflow: auto; }
 
-/* ---------- Locandina 600x600 (esportata a 1080x1080) ---------- */
+/* ---------- Locandina larga 600, alta secondo il formato (vedi FORMATI) ---------- */
 
 .card {
   width: 600px;
@@ -167,6 +165,10 @@ textarea { width: 100%; min-height: 200px; font: 400 13px/1.55 var(--body); resi
   white-space: nowrap;
 }
 .chip-room:not(:empty)::before { content: '📍 '; }
+
+/* 4:5: lo spazio in piu' va alla foto invece di restare vuoto tra i blocchi */
+.card.verticale .avatar-container { width: 200px; height: 200px; }
+.card.verticale .avatar-initials { font-size: 66px; }
 
 .content { display: flex; align-items: center; gap: 28px; }
 
@@ -291,8 +293,15 @@ body.senza-ai .ai, body.senza-ai #ai-all { display: none; }
 .prompt-azioni { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
 .nota { font: 400 11px var(--mono); color: var(--muted); }
 
-/* Il select delle dimensioni vive tra i campi, quindi veste come un input */
-.config select {
+/* Il select delle dimensioni veste come un input */
+.campo { align-self: flex-start; min-width: 220px; }
+.campo .sottosezioni { text-transform: none; letter-spacing: normal; font-family: var(--body); }
+
+/* Tre download sotto la locandina, uno per piattaforma, con la misura sotto il nome */
+.card-download { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 600px; }
+.card-download button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 12px; }
+.card-download small { font: 500 10px var(--mono); letter-spacing: .4px; color: var(--muted); }
+.campo select {
   margin-top: auto;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -302,24 +311,122 @@ body.senza-ai .ai, body.senza-ai #ai-all { display: none; }
   font: 400 14px var(--body);
 }
 
-.config select:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+.campo select:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
 
-/* L'input file non si puo' vestire: lo nascondo dentro una label-pulsante.
-   Il selettore deve reggere il confronto con ".config label", che altrimenti
-   vince e la fa uscire in mono maiuscolo come le etichette dei campi. */
-.config .importa {
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-  border-radius: 999px;
-  padding: 11px 22px;
-  font: 600 14px var(--body);
-  letter-spacing: normal;
-  text-transform: none;
-  background: var(--card);
-  color: var(--fg);
-  border: 1px solid var(--border);
+/* ---------- Tab e kit social speaker ---------- */
+
+/* Due livelli di navigazione. Le sezioni sono linguette con una linea sotto
+   che chiude l'header: sopra le impostazioni, sotto il contenuto. Le
+   sottosezioni sono un selettore piccolo, cosi' non si confondono con le azioni. */
+.sezioni { display: flex; gap: 4px; margin-top: 26px; border-bottom: 1px solid var(--border); }
+.sezioni button {
+  background: none; color: var(--muted); border-radius: 0;
+  padding: 12px 18px; margin-bottom: -1px; border-bottom: 3px solid transparent;
+  font: 700 17px var(--display); letter-spacing: -.3px;
 }
+.sezioni button:hover { color: var(--fg); filter: none; }
+.sezioni button[aria-current="page"] { color: var(--fg); border-bottom-color: var(--blue); }
+.sezioni button:focus { outline: none; }
+.sezioni button:focus-visible { outline: 2px solid var(--blue); outline-offset: -4px; border-radius: 8px 8px 0 0; }
 
-.config .importa:hover { filter: brightness(1.05); }
-.config .importa input { display: none; }
+.sottosezioni {
+  display: inline-flex; align-self: flex-start; gap: 2px; padding: 4px;
+  background: var(--soft); border: 1px solid var(--border); border-radius: 999px;
+}
+.sottosezioni button { background: none; color: var(--muted); padding: 8px 16px; font-size: 13px; }
+.sottosezioni button[aria-pressed="true"] { background: var(--card); color: var(--fg); box-shadow: 0 1px 3px rgba(23,21,15,.12); }
+.sottosezioni button:disabled { cursor: not-allowed; }
+
+/* Titolo di un blocco di schede, con la linea che lo stacca da quello sopra. */
+.sezione-titolo { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding-top: 22px; border-top: 1px solid var(--border); }
+.sezione-titolo h2 { font: 800 24px var(--display); letter-spacing: -.6px; }
+.sezione-titolo input { margin-left: auto; flex: 0 1 340px; }
+.sezione-titolo span { font: 700 11px var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+
+.giorno-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.giorno-head h2 { font: 800 22px var(--display); letter-spacing: -.5px; }
+.giorno-data, .giorno-formato { font: 700 11px var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--blue); }
+.giorno-formato { color: var(--muted); }
+
+.slide-azioni { display: flex; gap: 10px; }
+
+/* Reel: il canvas e' 1080x1920, in pagina lo mostro a misura di telefono. */
+.reel-canvas { width: 360px; height: 640px; border-radius: 18px; border: 1px solid var(--border); background: #f4efe4; }
+
+/* Kit social sponsors: i testi del reel a lato dell'anteprima. */
+.reel-campi { display: grid; gap: 10px; }
+.reel-campi label { display: flex; flex-direction: column; gap: 4px; font: 500 10px var(--mono); letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+
+/* Kit social speaker: miniature dei formati e canvas di regia per i reel. */
+.carta-talk { font: 600 15px var(--body); color: var(--muted); margin: -4px 0 14px; }
+.carta-miniature { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 6px; align-items: flex-end; }
+.carta-miniature figure { flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
+.carta-miniature img { height: 240px; border-radius: 10px; border: 1px solid var(--border); display: block; }
+.carta-miniature figcaption { font: 500 10px var(--mono); letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+.carta-speaker .slide-azioni { margin: 14px 0; }
+.carta-regia { display: flex; align-items: center; gap: 20px; }
+.carta-regia.nascosta { display: none; }
+.carta-speaker { display: block; }
+.carta-speaker .post { margin-top: 0; }
+/* Riquadro dei download in blocco: ogni voce dice cosa c'e' dentro e quanto ci mette. */
+.download { flex-direction: column; flex-wrap: nowrap; gap: 18px; }
+.download-voci { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.download-voce {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  border-radius: 14px; padding: 14px 18px; text-align: left;
+}
+.download-tutto { grid-column: 1 / -1; }
+.download-voce strong { font: 700 15px var(--body); }
+.download-voce span { font: 500 11px var(--mono); letter-spacing: .4px; opacity: .8; }
+.download .status { white-space: normal; }
+/* L'input file non si puo' vestire: lo nascondo dentro una label che veste come le altre voci. */
+.download-voce.importa { cursor: pointer; background: var(--card); color: var(--fg); border: 1px solid var(--border); }
+.download-voce.importa:hover { filter: brightness(1.05); }
+.download-voce.importa input { display: none; }
+.download .prompt { margin-top: 0; background: var(--bg); }
+.carta-altre { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; }
+.carta-altre figure { display: flex; flex-direction: column; gap: 6px; }
+.carta-altre img { width: 100%; border-radius: 8px; }
+.carta-altre figcaption { font: 600 12px var(--body); min-height: 2.4em; }
+
+/* Carica carte: speaker a sinistra, carta a destra, il filo diventa verde quando sono collegati. */
+.carica-carte { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 16px; }
+.carica-zona {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
+  padding: 22px; border: 2px dashed var(--border); border-radius: 14px; cursor: pointer;
+}
+.carica-zona input { display: none; }
+.carica-zona strong { font: 700 15px var(--body); }
+.carica-zona span { font: 500 11px var(--mono); color: var(--muted); }
+.carica-zona.sopra, .carica-libere.sopra { border-color: var(--blue); background: var(--soft); }
+.carica-libere { display: flex; gap: 10px; overflow-x: auto; padding: 10px; border: 1px solid var(--border); border-radius: 12px; min-height: 60px; }
+.carica-libere figure { flex-shrink: 0; width: 90px; display: flex; flex-direction: column; gap: 4px; cursor: grab; }
+.carica-libere figure.presa img { outline: 3px solid var(--blue); outline-offset: 2px; }
+.carica-libere img, .carica-slot img { width: 100%; border-radius: 6px; display: block; }
+.carica-libere figcaption { font: 500 9px var(--mono); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.carica-elenco { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 10px; padding: 0; margin: 0; }
+.carica-elenco li { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
+.carica-elenco li.sopra, .carica-elenco li.in-attesa { border-color: var(--blue); cursor: pointer; }
+.carica-foto { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: var(--soft); }
+.carica-chi { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.carica-chi strong { font: 700 14px var(--body); }
+.carica-chi span { font: 500 11px var(--body); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.carica-filo { width: 28px; flex-shrink: 0; border-top: 2px dashed var(--border); position: relative; }
+.collegato .carica-filo { border-top: 2px solid var(--green); }
+.collegato .carica-filo::after { content: ''; position: absolute; right: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+.carica-slot { width: 64px; flex-shrink: 0; position: relative; margin: 0; cursor: grab; }
+.carica-slot.vuoto { height: 89px; display: grid; place-items: center; border: 2px dashed var(--border); border-radius: 6px; font: 500 9px var(--mono); color: var(--muted); text-align: center; cursor: default; }
+.carica-slot button { position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; padding: 0; border-radius: 50%; font-size: 11px; background: var(--card); }
+.carica-slot small { display: block; margin-top: 3px; font: 500 8px var(--mono); letter-spacing: .5px; text-transform: uppercase; color: var(--green); text-align: center; }
+.carica-titolo { font: 700 11px var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin: 0; }
+.carica-gruppo { display: flex; flex-direction: column; gap: 10px; }
+
+/* Anagrafica organizzatori e sponsor: una riga per persona, campi in linea. */
+.persone { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 18px; }
+.persone-gruppo { display: flex; flex-direction: column; gap: 8px; }
+.persone-riga { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.persone-riga input { flex: 1 1 180px; min-width: 0; }
+.persone-foto { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex-shrink: 0; cursor: pointer; display: grid; place-items: center; background: var(--soft); border: 1px dashed var(--border); }
+.persone-foto img { width: 100%; height: 100%; object-fit: cover; }
+.persone-foto span { font: 500 8px var(--mono); color: var(--muted); }
+.persone-foto input { display: none; }

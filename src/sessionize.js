@@ -45,6 +45,21 @@ export function shortRole(role) {
   return first.length <= 60 ? first : first.slice(0, 57).trimEnd() + '…';
 }
 
+// Alcuni speaker su Sessionize hanno solo il nickname: sulla locandina va il nome vero.
+export const NOMI_COMPLETI = {
+  fabkru: 'Fabian Krumbholz',
+  maeste: 'Stefano Maestri',
+  haz: 'Harry Zhang',
+  seif: 'Seifeddin Mansri'
+};
+
+// Sessioni gia' sicure ma non ancora confermate su Sessionize: le tengo lo stesso.
+export const CONFERMATE_A_MANO = new Set([
+  '1353401'   // Manage AI security posture with the Secure AI Framework
+]);
+
+const nomeCompleto = (nome) => NOMI_COMPLETI[nome.trim().toLowerCase()] || nome;
+
 // Payload "view/All" -> dati della locandina.
 // Sessionize non marca i workshop. Nei dati reali stanno nella sala "Workshop"
 // e durano 90-135 minuti contro i 45 dei talk: uso entrambi i segnali, cosi'
@@ -53,6 +68,9 @@ export function tipoSessione(session, sala) {
   const durata = session?.startsAt && session?.endsAt
     ? (new Date(session.endsAt) - new Date(session.startsAt)) / 60000
     : 0;
+  // La masterclass sta nella Secret Track ed e' lunga come un workshop, ma non lo e'.
+  // Nella stessa sala ci sono anche talk da 20 minuti: quelli restano talk.
+  if (/masterclass/i.test(session?.title || '') || (/secret track/i.test(sala) && durata >= 60)) return 'Masterclass';
   return /workshop|\blab\b|hands.?on/i.test(`${sala} ${session?.title || ''}`) || durata >= 60
     ? 'Workshop'
     : 'Talk';
@@ -60,7 +78,7 @@ export function tipoSessione(session, sala) {
 
 export function mapSpeakers(data) {
   const roomName = new Map((data.rooms || []).map((r) => [String(r.id), r.name]));
-  const sessions = (data.sessions || []).filter((s) => s.isConfirmed !== false);
+  const sessions = (data.sessions || []).filter((s) => s.isConfirmed !== false || CONFERMATE_A_MANO.has(String(s.id)));
   const byId = new Map(sessions.map((s) => [String(s.id), s]));
 
   return (data.speakers || [])
@@ -71,12 +89,14 @@ export function mapSpeakers(data) {
       const room = roomName.get(String(session?.roomId)) || '';
       return {
         id: String(sp.id),
-        name: sp.fullName || `${sp.firstName || ''} ${sp.lastName || ''}`.trim(),
+        name: nomeCompleto(sp.fullName || `${sp.firstName || ''} ${sp.lastName || ''}`.trim()),
         role: shortRole(sp.tagLine || ''),
         photo: proxyPhoto(sp.profilePicture),
         talk: session?.title || sp.sessions?.[0]?.name || '',
         room,
         kind: tipoSessione(session, room),
+        inizio: session?.startsAt || '',
+        fine: session?.endsAt || '',
         tags: topicTags(session?.title || '', session?.description || '').join(' '),
         // non compaiono sulla locandina: servono all'AI per scrivere i post
         roleFull: sp.tagLine || '',

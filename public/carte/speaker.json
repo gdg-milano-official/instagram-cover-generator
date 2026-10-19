@@ -1,0 +1,419 @@
+[
+  {
+    "id": "26e58b45-d6a2-412e-8e3f-fd65a02064dd",
+    "name": "Gabriel Palmisano",
+    "role": "Mobile Developer @ EBWorld",
+    "talk": "L'IA che usa la tua app al posto tuo: Testing Agentico su Mobile",
+    "kind": "Talk + Demo",
+    "abstract": "Scrivere test di UI su mobile spesso significa combattere con setup complessi, selettori fragili e manutenzione continua. E se, invece di scrivere codice di test, potessi semplicemente dire all'app cosa fare?\r\n\r\nIl Testing Agentico permette a un agente IA di collegarsi a un'app in esecuzione, esplorarla come farebbe un utente reale e verificarne il comportamento seguendo istruzioni in linguaggio naturale. Non si limita a osservare lo schermo: sa anche quali elementi dell'interfaccia sono presenti, quali sono interagibili e come usarli.\r\n\r\nIn questo talk vedremo un agente all'opera su un'app mobile reale: eseguirà tap, scroll e input, interpreterà ciò che accade sullo schermo e controllerà che il risultato sia quello atteso, utilizzando strumenti open source come Marionette MCP.\r\n\r\nParleremo anche dei limiti di questo approccio. Quando ha senso affidarsi a un agente? Cosa può fare meglio dei test tradizionali e cosa, invece, continuerà a richiedere assertion deterministiche e test scritti a mano?\r\n\r\nAttraverso una demo live costruiremo un flusso di testing agentico in pochi minuti e vedremo come questa nuova classe di strumenti possa affiancare, non sostituire, la strategia di testing di un'app mobile.\r\nSmetti di combattere con i test. Inizia a parlare con la tua app.",
+    "lingua": "it",
+    "livello": "beginner",
+    "tags": [
+      "Agentic AI",
+      "Android",
+      "Tools"
+    ],
+    "room": "Nexus",
+    "ora": "12:15–13:00",
+    "coSpeaker": [],
+    "carta": "/carte/gabriel-palmisano.jpg",
+    "numero": "006/058"
+  },
+  {
+    "id": "e38207cb-4742-4cc2-9b52-712a527a5ea5",
+    "name": "Claudio Giorgio Giancaterino",
+    "role": "Actuary & AI Scientist",
+    "talk": "From Photo to Payout: A Gemini-Native Multi-Agent System for Real-Time Auto Claims",
+    "kind": "Talk + Demo",
+    "abstract": "## Project Goal and Business Impact\r\n\r\nImagine starting an auto insurance claim simply by photographing the damaged vehicle with your phone. Before the claim is analyzed, an AI agent verifies that the submitted image is clear, properly framed, sufficiently illuminated, and suitable for an accurate assessment. Within minutes, the system can then generate a structured damage evaluation, compare potential repair strategies, and identify relevant repair facilities.\r\n\r\nThe primary objective of this project is to improve the speed, consistency, and transparency of the initial auto insurance claims process. Traditional assessments often depend on manual inspections, fragmented information, and time-consuming repair estimates. These steps can delay claim resolution, increase operational costs, and create inconsistencies between evaluations.\r\n\r\nThis application introduces a Gemini-powered Multi-Agent System that transforms vehicle photographs into a comprehensive preliminary claims assessment. It is designed to support insurers, claims professionals, repair specialists, and customers by providing a rapid, data-driven starting point for claim triage and further investigation.\r\n\r\nThe generated assessment is intended to support the initial evaluation process rather than replace a certified vehicle inspection, professional repair quotation, or final insurance decision.\r\n\r\n## The Multi-Agent Architecture\r\n\r\nAt the center of the application is an Orchestrator Agent that manages the complete claims-analysis workflow. It determines the order in which tasks must be performed, sends the appropriate information to each specialist agent, monitors their execution, handles dependencies, and combines their outputs into a coherent final report.\r\n\r\nThe architecture includes several Gemini-powered agents, each responsible for a specific stage of the evaluation.\r\n\r\n### Photo Quality Agent\r\n\r\nThe Photo Quality Agent acts as the first validation layer in the workflow. Before any damage assessment begins, it determines whether the uploaded photograph contains enough reliable visual information for further analysis.\r\n\r\nThe agent checks for issues such as excessive blur, poor lighting, reflections, unsuitable camera angles, low resolution, obstructions, excessive distance from the vehicle, and incomplete visibility of the damaged area.\r\n\r\nWhen the photograph is unsuitable, the agent explains the problem and provides practical instructions for taking a better image. This prevents low-quality visual evidence from propagating through the remaining agents and producing unreliable estimates.\r\n\r\nBy introducing an explicit quality-control stage, the system improves the reliability of every subsequent decision.\r\n\r\n### Vision and Damage Assessment Agent\r\n\r\nOnce the photograph passes the quality check, the Vision Agent uses Gemini’s multimodal capabilities to examine the vehicle and identify visible damage.\r\n\r\nThe agent determines which vehicle components appear to be affected, such as bumpers, body panels, doors, fenders, headlights, mirrors, windows, and wheels. It also classifies the visible damage according to categories such as scratches, dents, cracks, paint damage, deformation, broken components, and collision-related damage.\r\n\r\nThe assessment includes an estimated severity level—minor, moderate, or severe—together with a technical explanation of the visual evidence supporting the classification.\r\n\r\nWhere the available image does not provide enough information to reach a reliable conclusion, the agent records the limitation instead of presenting an unsupported diagnosis.\r\n\r\n### OEM Cost Estimation Agent\r\n\r\nThe OEM, or Original Equipment Manufacturer, Cost Estimation Agent evaluates a premium repair scenario.\r\n\r\nIts analysis prioritizes manufacturer-approved repair procedures, original replacement parts, authorized repair facilities, specialized labor, paint matching, calibration requirements, and other services that may be necessary to restore the vehicle according to manufacturer standards.\r\n\r\nThe agent uses the damage assessment, the affected components, the estimated labor involved, and the available vehicle and market context to generate an indicative cost range.\r\n\r\n### Aftermarket Cost Estimation Agent\r\n\r\nThe Aftermarket Cost Estimation Agent evaluates a more cost-conscious repair strategy.\r\n\r\nIt considers certified aftermarket parts, compatible replacement components, independent repair facilities, alternative labor rates, component repair instead of replacement, and other approaches that may reduce the total repair cost while maintaining acceptable quality and safety standards.\r\n\r\nRunning the OEM and Aftermarket agents separately allows the system to present two clearly differentiated repair scenarios rather than producing a single unexplained estimate.\r\n\r\n### Shop Finder Agent\r\n\r\nThe Shop Finder Agent identifies repair facilities that may be relevant to the user’s location and the type of damage detected.\r\n\r\nIt can organize available information such as shop names, areas of specialization, contact details, ratings, proximity, and other useful selection criteria. Its search strategy can adapt according to the vehicle components involved and the repair approach being considered.\r\n\r\nFor example, a severe collision assessment may prioritize body shops with structural repair and calibration capabilities, while a minor scratch may require only a paint and cosmetic repair specialist.\r\n\r\n## Gemini-Native Technical Architecture\r\n\r\nThe new application is built entirely around Gemini and the Google AI ecosystem.\r\n\r\nGoogle AI Studio provides the development environment for designing, testing, and refining the application and its agent workflows. Gemini supplies the multimodal understanding and reasoning capabilities used throughout the system, including image-quality evaluation, vehicle-damage analysis, repair-scenario generation, information synthesis, and final report creation.\r\n\r\nRather than relying on different model providers for individual tasks, the application uses a unified Gemini-based architecture. This simplifies communication between agents, reduces integration complexity, and creates a more consistent data flow across the complete pipeline.\r\n\r\nThe application is deployed on Google Cloud Run, providing a managed environment for running the web application and its backend services. This deployment model enables the system to be made available as an online application while supporting scalable, production-oriented execution.\r\n\r\n## State Management and Agent Coordination\r\n\r\nThe system maintains a shared claim state containing the information produced during each stage of the workflow.\r\n\r\nThis state may include the uploaded photograph, photo-quality results, detected vehicle components, damage classifications, severity levels, confidence indicators, repair assumptions, cost scenarios, location information, shop results, warnings, and unresolved questions.\r\n\r\nEach agent receives only the context required for its task and returns a structured result to the Orchestrator Agent. The orchestrator then verifies that the required stages have been completed and combines the individual outputs into a unified claims-assessment report.\r\n\r\nConfidence indicators help distinguish between strong visual evidence and uncertain conclusions. When an agent has insufficient information, the system can communicate that uncertainty, request another photograph, or recommend professional inspection.\r\n\r\n## Agent Execution and Transparency\r\n\r\nEach agent follows a ReAct-inspired execution pattern based on planning, action, observation, and refinement.\r\n\r\nThe agent first evaluates its assigned objective and the available claim context. It then selects an appropriate action, processes the relevant information, observes the result, and determines whether further analysis is necessary.\r\n\r\nInstead of exposing private model reasoning, the application can provide a structured activity log containing the task assigned to each agent, the action performed, the evidence considered, the resulting observation, the confidence level, and the final output.\r\n\r\nThis creates an auditable execution trace that allows users to understand how the assessment progressed from image validation to damage analysis, cost estimation, repair-shop identification, and final report generation.\r\n\r\n## Generative AI Compared with Traditional Tools\r\n\r\nTraditional automated vehicle-inspection systems often depend on fixed computer-vision models, predefined rules, static repair databases, or monolithic processing pipelines. These solutions can be effective for narrowly defined tasks, but they may struggle to interpret incomplete evidence, adapt their workflow, explain uncertainty, or combine multiple types of information.\r\n\r\nThe Gemini-powered Multi-Agent System introduces a modular reasoning and coordination layer between the original photograph and the final assessment.\r\n\r\nEach specialist agent has a clearly defined responsibility, input, output, and confidence level. This makes the workflow easier to inspect, test, extend, and improve than a single large prompt or an opaque end-to-end script.\r\n\r\nThe modular structure also supports the future development of a hybrid architecture. Individual agents could be replaced or supplemented by deterministic computer-vision models, manufacturer repair databases, parts catalogues, pricing APIs, mapping services, fraud-detection systems, or human-review checkpoints without redesigning the entire application.\r\n\r\nGenerative AI therefore operates as the coordination and interpretation layer, while specialized conventional systems can provide additional precision for individual tasks.\r\n\r\n## The Future of Insurance Claims\r\n\r\nThis application demonstrates how Gemini-powered agents can collaborate to automate complex, multimodal business workflows.\r\n\r\nThe architecture goes beyond basic vehicle-damage recognition. It validates the quality of the submitted evidence, analyzes visible damage, compares different repair approaches, identifies potentially relevant repair providers, manages uncertainty, and combines the results into a transparent preliminary assessment.\r\n\r\nThe same architecture could eventually support additional agents for vehicle identification, document analysis, policy verification, fraud indicators, repair authorization, parts availability, claims-history analysis, payment recommendations, and mandatory human approval.\r\n\r\nBuilt with Gemini in Google AI Studio and deployed on Google Cloud Run, the project provides a scalable blueprint for developing intelligent, modular, and explainable insurance applications.\r\n\r\nIt shows how a coordinated team of specialized AI agents can transform a single vehicle photograph into actionable claims information, reducing initial processing time while keeping uncertainty, traceability, and professional oversight at the center of the workflow.\r\nlink to the web app: https://multi-agent-car-damage-evaluation.ai.studio",
+    "lingua": "en",
+    "livello": "intermediate",
+    "tags": [
+      "AI",
+      "Agentic AI",
+      "Generative AI"
+    ],
+    "room": "Nexus",
+    "ora": "17:30–18:15",
+    "coSpeaker": [],
+    "carta": "/carte/claudio-giorgio-giancaterino.jpg",
+    "numero": "007/058"
+  },
+  {
+    "id": "ad5f1938-214f-4eaa-a95d-4a89b363bc38",
+    "name": "Chiraz Chahbani",
+    "role": "Google developer expert in Cloud / Software Engineer",
+    "talk": "Vibe Coding with AI & Antigravity",
+    "kind": "Workshop",
+    "abstract": "Learn how to build production-ready AI applications using Antigravity, from local development to deployment, while leveraging modern AI-assisted development workflows.",
+    "lingua": "en",
+    "livello": "",
+    "tags": [],
+    "room": "Workshop",
+    "ora": "14:00–15:30",
+    "coSpeaker": [],
+    "carta": "/carte/chiraz-chahbani.jpg",
+    "numero": "008/058"
+  },
+  {
+    "id": "11961b36-1beb-4478-a310-178721543d67",
+    "name": "Andrea Alberto",
+    "role": "Autogrill, In Store Technology & Store Project Manager",
+    "talk": "Agentic Commerce: Redefining E-Commerce across UCP, Web MCP, and Physical Retail",
+    "kind": "Talk + Demo",
+    "abstract": "E-commerce is undergoing its most profound technological shift yet: moving from active user navigation to Agentic Commerce, where autonomous AI agents discover, configure, and purchase products on our behalf. But how do system architectures adapt when our primary counterpart is no longer a human browsing a screen, but a Large Language Model executing transactions?\r\nIn this talk, we will explore the evolving geography of digital commerce by comparing key protocol paradigms: the native backend approach of the Universal Commerce Protocol (UCP) launched by Google and Shopify, the financial/transactional framework of OpenAI and Stripe's Agentic Commerce Protocol (ACP), and the client-side approach of Web MCP.\r\nWe will demonstrate how this revolution extends far beyond traditional online storefronts to empower the physical retail space. Through a real-world storytelling lens focused on travel retail and high-traffic environments (railway stations, airports), we will examine how sharing real-time catalogs, inventory, and capabilities via APIs allows AI agents to manage context-aware orders and pickups in physical locations.\r\nFinally, we will dive into concrete architectural patterns for enabling this transition: designing a serverless middleware on Google Cloud (Cloud Run, Firestore, Vertex AI) to deliver low-lateny responses, \"AI-Ready\" data structures, and resilient fallback strategies when physical and digital workflows converge.",
+    "lingua": "it",
+    "livello": "advanced",
+    "tags": [
+      "AI",
+      "Tools"
+    ],
+    "room": "Nexus",
+    "ora": "14:45–15:30",
+    "coSpeaker": [],
+    "carta": "/carte/andrea-alberto.jpg",
+    "numero": "009/058"
+  },
+  {
+    "id": "caf510c2-96ab-486d-8f3e-f1b43c41c901",
+    "name": "Balazs Horvath",
+    "role": "Founder, Lead Architect at VisualLabs",
+    "talk": "We gave AI twelve weeks to build the perfect employee: We will never need to hire a senior again",
+    "kind": "Talk",
+    "abstract": "There is a generation of bright, capable people knocking on the door of every knowledge industry right now, and almost nobody is opening it, because companies want senior hires, experienced hires, ready-made hires. Junior talent gets the polite rejection because nobody has time to train them, and the assumption is that without three to five years of someone else doing the work first, they will not be ready.\r\n\r\nThat assumption is about to age very badly, because the gap between a smart, motivated junior and a productive professional used to be filled by years of slow apprenticeship, and now it can be filled by a structured curriculum, an AI tutor that knows the methodology cold and an assessment that pressure-tests the reasoning. The years were never the point, the knowledge transfer was, and AI just changed what knowledge transfer can look like.\r\n\r\nSo we did something different when we scaled our own firm from zero to thirty people in a few short years, building it almost entirely from people the rest of the industry would have rejected as too junior.\r\n\r\nThey were trained in twelve weeks, billing by week thirteen and running their own engagements by month six. The talent was always there, what was missing was a way to develop it that did not take half a decade and a senior mentor we could not spare.\r\n\r\nIn this session we will go through the full design, the curriculum that compresses years into weeks, the role of AI as tutor, sparring partner and assessor, the skills map that defines what \"ready\" actually means across five levels and eighty-two competencies, the mistakes from the first cohort that taught us as much as they cost us and the honest answer to what the shortcomings of this approach are.",
+    "lingua": "en",
+    "livello": "intermediate",
+    "tags": [
+      "Generative AI"
+    ],
+    "room": "Nexus",
+    "ora": "10:15–11:00",
+    "coSpeaker": [],
+    "carta": "/carte/balazs-horvath.jpg",
+    "numero": "010/058"
+  },
+  {
+    "id": "6fc71432-0fc4-4160-a7c9-0284e55e6398",
+    "name": "Alfredo Morresi",
+    "role": "Developer Relations @ Google",
+    "talk": "Minions AI che rispondono agli ordini!",
+    "kind": "Talk",
+    "abstract": "VPS, install.sh, chiave del bot Telegram ed il nostro primo Minions AI è pronto. Due prompt e inizia a fare cose, vedere gente. Tutto bello, quasi magico. Aggiungiamo Minions, \"workflowizziamo\" sempre più cose, ma dopo un mese ci accorgiamo che passiamo più tempo a dare martellate per aggiustare cose, rispetto a crearne di nuove.\r\nUn distillato di tutto il sonno perso in questi mesi per ridurre al minimo il conto che il non deterministo degli LLM prima o poi ci presenta, tra skill design, pattern organizzativi e strumenti di supporto agli harness. Partendo dalla produttività personale con Hermes Agent in salsa self hosted, ma applicable a tutto il resto.",
+    "lingua": "it",
+    "livello": "intermediate",
+    "tags": [],
+    "room": "Coworking",
+    "ora": "10:15–11:00",
+    "coSpeaker": [],
+    "carta": "/carte/alfredo-morresi.jpg",
+    "numero": "011/058"
+  },
+  {
+    "id": "a36c3d29-ce68-41e3-8021-d973c85f98ef",
+    "name": "Alessio Soldano",
+    "role": "Software Engineer & Manager",
+    "talk": "Agents Speak Protocol: Why Standards Are the Real Infrastructure of AI",
+    "kind": "Talk",
+    "abstract": "Every major computing revolution eventually standardized how things talk to each other. Before TCP/IP, networks spoke dialects. Before HTTP, every service invented its own wire format. Before REST, SOAP was the only \"enterprise\" answer. Each time, entropy was reduced not by building better applications, but by agreeing on how they connect.\r\n\r\nWe are at exactly that inflection point with AI agents.\r\n\r\nToday's agent ecosystem is a tower of Babel: agents speak different frameworks, tools are wired with one-off integrations, UIs are bolted on as afterthoughts, and client communication is reinvented per product. This is not a feature. It is entropy, and it is expensive.\r\n\r\nThis talk maps the emerging protocol stack that is finally bringing order: MCP for agent-to-tool context, A2A for peer-to-peer agent collaboration, A2UI and AG-UI/MCPUI for declarative and generative interfaces, and ACP for client-side orchestration. We will examine what each protocol solves, where its boundaries are, and — critically — how they complement rather than compete. You will see concrete architectures where MCP and A2A work side by side in the same system, each doing what it does best.\r\n\r\nAlong the way, we will draw parallels from protocol wars past: CORBA vs REST, SOAP vs JSON, WebSockets vs polling. History teaches that winners are rarely the most feature-rich; they are the simplest protocols that reduce the most uncertainty. The same pattern is already playing out in agentic AI.",
+    "lingua": "it",
+    "livello": "advanced",
+    "tags": [
+      "AI",
+      "Agentic AI",
+      "Generative AI",
+      "Software Engineering"
+    ],
+    "room": "Coworking",
+    "ora": "17:30–18:15",
+    "coSpeaker": [
+      "Stefano Maestri"
+    ],
+    "carta": "/carte/alessio-soldano.jpg",
+    "numero": "012/058"
+  },
+  {
+    "id": "371c770a-ab0d-45a9-88e7-d6abb6f1c7e9",
+    "name": "Tomas Piaggio",
+    "role": "CTO at Centinel, Firebase GDE, Professor of Software Architecture @ ORT University Uruguay",
+    "talk": "Beyond Text: Multimodal RAG with Gemini and Firestore",
+    "kind": "Talk + Demo",
+    "abstract": "In this session, we'll make the leap from traditional RAGs to Multimodal RAGs. You'll learn how to use Gemini models to generate document embeds and index them natively in Firestore. Discover how to build applications that can simultaneously \"see\" and \"read\" your database, maintaining a 100% serverless architecture and without the complexity of managing external vector databases.",
+    "lingua": "it",
+    "livello": "advanced",
+    "tags": [
+      "AI",
+      "Generative AI",
+      "Serveless",
+      "WebApp",
+      "Software Engineering"
+    ],
+    "room": "Coworking",
+    "ora": "09:30–10:15",
+    "coSpeaker": [],
+    "carta": "/carte/tomas-piaggio.jpg",
+    "numero": "013/058"
+  },
+  {
+    "id": "e0670628-87d9-4394-967d-59567c069cb7",
+    "name": "Zelda Ailine Luconi",
+    "role": "Datwave, Senior Cloud Architect and Data Engineer",
+    "talk": "The New Assembly Line: Designing AI Agents That Work Like Ford's Factory",
+    "kind": "Workshop",
+    "abstract": "After its debut at Coderful 2026 in Catania — where it was met with great enthusiasm and strong technical engagement — this talk now brings its mission to the GDG community: a full immersion into the world of AI Design Architecture applied to multi-agent systems.\r\nFord didn't know it, but he was inventing the future of artificial intelligence.\r\n\r\nThe idea that transformed industrial production — breaking a complex process into specialized stations, connected by precise handoffs — is today the most powerful paradigm for building AI systems that actually work in production.\r\nA single monolithic agent suffers from the same pathologies as an assembly line run by a single worker: context dilution, lack of specialization, inability to parallelize, confirmation bias. The result? A one-way ticket to the AI project graveyard — that silent cemetery of ambitious pilots that never made it to production.\r\nThe answer is the digital assembly line: a multi-agent architecture where each station receives the output of its predecessor, applies its specific function, and passes the transformed artifact to the next station — with typed schemas, clean handoffs, and full technological heterogeneity across stations.\r\nIn this talk we will explore the three pillars of the assembly line applied to AI:\r\n\r\nStructured workflow — Graph workflows and multi-agent orchestration with Google ADK: when to use a deterministic approach and when to leave room for autonomy.\r\nTechnological heterogeneity — Sub-agents, Tools, MCP, and the A2A (Agent-to-Agent) protocol: how to equip agents with tools and enable them to interact with data sources or with each other.\r\nStructured handoffs — how to eliminate structural hallucinations and make the pipeline robust and self-corrective using input/output schemas with Pydantic.\r\n\r\nAll of this through a concrete, narrative use case — built live, slide after slide, line of code after line of code with Google ADK — all the way to the complete final architecture.",
+    "lingua": "it",
+    "livello": "advanced",
+    "tags": [
+      "AI",
+      "Agentic AI"
+    ],
+    "room": "Workshop",
+    "ora": "11:30–13:00",
+    "coSpeaker": [],
+    "carta": "/carte/zelda-ailine-luconi.jpg",
+    "numero": "014/058"
+  },
+  {
+    "id": "698f8223-4ece-4a46-bb83-d3693d0e1841",
+    "name": "Stefano Soriano",
+    "role": "Deloite - Mobile Engineer",
+    "talk": "AI On-Device: Cooking from your fridge with Gemini Nano, MobileCLIP and Gemma",
+    "kind": "Lightning talk",
+    "abstract": "What happens when you commit to running every piece of AI in your app on the phone itself — no cloud, no API keys, no server logs of your users' kitchens?\r\n\r\nWe built AI Pantry, an Android app that scans your fridge with the camera, recognizes the ingredients and generates recipes — 100% on-device.\r\nOur first choice was the obvious platform one: Gemini Nano, Android's new built-in on-device model. One dependency, zero megabytes of weights in the APK — perfect, except it only runs on brand-new flagship phones (Pixel 9/10, Galaxy S25/S26), not on the devices most users actually own.\r\nSo we pivoted to plan B: bundle a single multimodal LLM (Gemma 4 E2B) and use it for both vision and text. It worked. It also took 5–10 minutes per scan on a mid-range phone (Pixel 7).\r\nThis session is the story of fixing that, with real code and real measurements:\r\n\r\n- Gemini Nano via ML Kit GenAI Prompt API: the model lives in AICore, an Android system service — not in your app. You get multimodal prompts (photo + text in, text out) against weights you never ship, download, or update: zero MB in your APK, hardware acceleration included. The integration is one dependency and one rule: availability is a runtime question, so gate every single call with checkStatus() — the same phone can answer differently over time (model not yet downloaded, or evicted). Used this way, Nano becomes a free accelerator on supported devices, with your own detector as the everywhere-fallback — never the foundation the app stands on.\r\n\r\n- One model to rule them all — and why it crawled: we bundled Gemma 4 E2B and asked it to look at the fridge photo and write the ingredient list as JSON. The catch is how multimodal LLMs work: first the photo becomes ~1,000 image tokens that must all be processed before a single word of output (the prefill), then the answer is generated one token at a time (the decode) — hundreds of sequential passes through a 2-billion-parameter model. On a mid-range phone, that arithmetic adds up to a 5-to-10-minute scan. Know this two-phase cost model before promising any multimodal UX.\r\n\r\n- Zero-shot ingredient detection with MobileCLIP-S2 on LiteRT: recognition doesn't need a model that writes — it needs one that compares. CLIP-family models use two small encoders that turn an image and a phrase into vectors in the same space, so \"is this a watermelon?\" becomes a cosine similarity instead of a generated sentence: one fixed forward pass of a ~140 MB encoder, no prefill, no word-by-word decode. To make it work we built the vocabulary ourselves — a curated list of hundreds of ingredient labels — embedded it offline on a laptop, and bundled just the vectors (~4.5 MB): the phone only runs the image encoder, and the \"classifier\" is an editable text file. Add an ingredient? Add a line. Result on the same phone: minutes → seconds.\r\n\r\n- Where the LLM earns its keep: recipes are creation, not recognition — the one job no closed vocabulary can do, so Gemma stays, via LiteRT-LM, and we make it feel fast: two-stage prompting (first a few-token list of recipe ideas, the full recipe only when you tap one — shorter prompts, less waiting), defensive JSON parsing with silent retries (small models may break format contracts, plan for it), and text-only generation streaming at 15–25 tok/s — on a phone, watching the recipe write itself is a feature, not a wait.\r\n\r\n- Shipping it: each model travels differently. Gemini Nano costs you zero megabytes — AICore owns it. MobileCLIP's ~140 MB encoder ships inside the APK like any asset. But Gemma's 2.6 GB of weights fit in no APK, and hand-rolling a downloader for multi-GB files (resume, integrity, metered connections) is a project in itself — so they travel as AI packs via Play for On-device AI, riding Google Play's own delivery pipeline. The user just installs the app; distribution stops being your problem.\r\n\r\nKey takeaways:\r\n\r\n1. Match the model class to the task: perception ≠ generation. Recognizing what's in a photo is a comparison problem; writing text is a generation problem. Using a generative model for perception cost us minutes per scan — swapping in a discriminative one brought it down to seconds, on the same phone.\r\n\r\n2. Platform AI is a capability, not a foundation. Gemini Nano/AICore gives you a free, zero-MB multimodal model — but only on recent flagships, and availability changes at runtime. Detect it with checkStatus() on every use, exploit it when present, and always have your own fallback underneath.\r\n\r\n3. The cheapest ML you'll ever ship is a text file. With CLIP-family models, precomputing label embeddings offline turns zero-shot classification into \"an editable list of ingredient names + ~4.5 MB of vectors\" — no dataset, no training run, no ML infrastructure. Extending the classifier is adding a line.\r\n\r\n4. Learn the two-phase cost model before promising any multimodal UX. A photo becomes hundreds of image tokens that must all be processed before the first output word (prefill), then the answer comes out one token at a time (decode). That arithmetic — not the model's quality — decides whether your feature takes seconds or minutes.\r\n\r\n5. With small on-device models, defensive parsing IS the API contract. They will occasionally break your output format: plan for lenient JSON parsing and silent retries from day one, so the user sees results, not errors.",
+    "lingua": "it",
+    "livello": "intermediate",
+    "tags": [
+      "AI",
+      "Generative AI",
+      "Android"
+    ],
+    "room": "Coworking",
+    "ora": "11:30–12:15",
+    "coSpeaker": [
+      "Salvatore Matrisciano"
+    ],
+    "carta": "/carte/stefano-soriano.jpg",
+    "numero": "015/058"
+  },
+  {
+    "id": "3f1157d2-641c-41c7-86b3-e2d22af1b453",
+    "name": "Stefano Maestri",
+    "role": "Software and AI engineering manager",
+    "talk": "Agents Speak Protocol: Why Standards Are the Real Infrastructure of AI",
+    "kind": "Talk",
+    "abstract": "Every major computing revolution eventually standardized how things talk to each other. Before TCP/IP, networks spoke dialects. Before HTTP, every service invented its own wire format. Before REST, SOAP was the only \"enterprise\" answer. Each time, entropy was reduced not by building better applications, but by agreeing on how they connect.\r\n\r\nWe are at exactly that inflection point with AI agents.\r\n\r\nToday's agent ecosystem is a tower of Babel: agents speak different frameworks, tools are wired with one-off integrations, UIs are bolted on as afterthoughts, and client communication is reinvented per product. This is not a feature. It is entropy, and it is expensive.\r\n\r\nThis talk maps the emerging protocol stack that is finally bringing order: MCP for agent-to-tool context, A2A for peer-to-peer agent collaboration, A2UI and AG-UI/MCPUI for declarative and generative interfaces, and ACP for client-side orchestration. We will examine what each protocol solves, where its boundaries are, and — critically — how they complement rather than compete. You will see concrete architectures where MCP and A2A work side by side in the same system, each doing what it does best.\r\n\r\nAlong the way, we will draw parallels from protocol wars past: CORBA vs REST, SOAP vs JSON, WebSockets vs polling. History teaches that winners are rarely the most feature-rich; they are the simplest protocols that reduce the most uncertainty. The same pattern is already playing out in agentic AI.",
+    "lingua": "it",
+    "livello": "advanced",
+    "tags": [
+      "AI",
+      "Agentic AI",
+      "Generative AI",
+      "Software Engineering"
+    ],
+    "room": "Coworking",
+    "ora": "17:30–18:15",
+    "coSpeaker": [
+      "Alessio Soldano"
+    ],
+    "carta": "/carte/stefano-maestri.jpg",
+    "numero": "016/058"
+  },
+  {
+    "id": "446bfd0f-2464-4b82-8acb-d86566327714",
+    "name": "Salvatore Matrisciano",
+    "role": "Mobile Engineer @ Deloitte",
+    "talk": "AI On-Device: Cooking from your fridge with Gemini Nano, MobileCLIP and Gemma",
+    "kind": "Lightning talk",
+    "abstract": "What happens when you commit to running every piece of AI in your app on the phone itself — no cloud, no API keys, no server logs of your users' kitchens?\r\n\r\nWe built AI Pantry, an Android app that scans your fridge with the camera, recognizes the ingredients and generates recipes — 100% on-device.\r\nOur first choice was the obvious platform one: Gemini Nano, Android's new built-in on-device model. One dependency, zero megabytes of weights in the APK — perfect, except it only runs on brand-new flagship phones (Pixel 9/10, Galaxy S25/S26), not on the devices most users actually own.\r\nSo we pivoted to plan B: bundle a single multimodal LLM (Gemma 4 E2B) and use it for both vision and text. It worked. It also took 5–10 minutes per scan on a mid-range phone (Pixel 7).\r\nThis session is the story of fixing that, with real code and real measurements:\r\n\r\n- Gemini Nano via ML Kit GenAI Prompt API: the model lives in AICore, an Android system service — not in your app. You get multimodal prompts (photo + text in, text out) against weights you never ship, download, or update: zero MB in your APK, hardware acceleration included. The integration is one dependency and one rule: availability is a runtime question, so gate every single call with checkStatus() — the same phone can answer differently over time (model not yet downloaded, or evicted). Used this way, Nano becomes a free accelerator on supported devices, with your own detector as the everywhere-fallback — never the foundation the app stands on.\r\n\r\n- One model to rule them all — and why it crawled: we bundled Gemma 4 E2B and asked it to look at the fridge photo and write the ingredient list as JSON. The catch is how multimodal LLMs work: first the photo becomes ~1,000 image tokens that must all be processed before a single word of output (the prefill), then the answer is generated one token at a time (the decode) — hundreds of sequential passes through a 2-billion-parameter model. On a mid-range phone, that arithmetic adds up to a 5-to-10-minute scan. Know this two-phase cost model before promising any multimodal UX.\r\n\r\n- Zero-shot ingredient detection with MobileCLIP-S2 on LiteRT: recognition doesn't need a model that writes — it needs one that compares. CLIP-family models use two small encoders that turn an image and a phrase into vectors in the same space, so \"is this a watermelon?\" becomes a cosine similarity instead of a generated sentence: one fixed forward pass of a ~140 MB encoder, no prefill, no word-by-word decode. To make it work we built the vocabulary ourselves — a curated list of hundreds of ingredient labels — embedded it offline on a laptop, and bundled just the vectors (~4.5 MB): the phone only runs the image encoder, and the \"classifier\" is an editable text file. Add an ingredient? Add a line. Result on the same phone: minutes → seconds.\r\n\r\n- Where the LLM earns its keep: recipes are creation, not recognition — the one job no closed vocabulary can do, so Gemma stays, via LiteRT-LM, and we make it feel fast: two-stage prompting (first a few-token list of recipe ideas, the full recipe only when you tap one — shorter prompts, less waiting), defensive JSON parsing with silent retries (small models may break format contracts, plan for it), and text-only generation streaming at 15–25 tok/s — on a phone, watching the recipe write itself is a feature, not a wait.\r\n\r\n- Shipping it: each model travels differently. Gemini Nano costs you zero megabytes — AICore owns it. MobileCLIP's ~140 MB encoder ships inside the APK like any asset. But Gemma's 2.6 GB of weights fit in no APK, and hand-rolling a downloader for multi-GB files (resume, integrity, metered connections) is a project in itself — so they travel as AI packs via Play for On-device AI, riding Google Play's own delivery pipeline. The user just installs the app; distribution stops being your problem.\r\n\r\nKey takeaways:\r\n\r\n1. Match the model class to the task: perception ≠ generation. Recognizing what's in a photo is a comparison problem; writing text is a generation problem. Using a generative model for perception cost us minutes per scan — swapping in a discriminative one brought it down to seconds, on the same phone.\r\n\r\n2. Platform AI is a capability, not a foundation. Gemini Nano/AICore gives you a free, zero-MB multimodal model — but only on recent flagships, and availability changes at runtime. Detect it with checkStatus() on every use, exploit it when present, and always have your own fallback underneath.\r\n\r\n3. The cheapest ML you'll ever ship is a text file. With CLIP-family models, precomputing label embeddings offline turns zero-shot classification into \"an editable list of ingredient names + ~4.5 MB of vectors\" — no dataset, no training run, no ML infrastructure. Extending the classifier is adding a line.\r\n\r\n4. Learn the two-phase cost model before promising any multimodal UX. A photo becomes hundreds of image tokens that must all be processed before the first output word (prefill), then the answer comes out one token at a time (decode). That arithmetic — not the model's quality — decides whether your feature takes seconds or minutes.\r\n\r\n5. With small on-device models, defensive parsing IS the API contract. They will occasionally break your output format: plan for lenient JSON parsing and silent retries from day one, so the user sees results, not errors.",
+    "lingua": "it",
+    "livello": "intermediate",
+    "tags": [
+      "AI",
+      "Generative AI",
+      "Android"
+    ],
+    "room": "Coworking",
+    "ora": "11:30–12:15",
+    "coSpeaker": [
+      "Stefano Soriano"
+    ],
+    "carta": "/carte/salvatore-matrisciano.jpg",
+    "numero": "017/058"
+  },
+  {
+    "id": "ab0ee079-c55d-4ae0-955b-d47a63b45cf8",
+    "name": "Max Kless",
+    "role": "Engineer at Nx & Polygraph",
+    "talk": "The Meta-Harness: Scaling Agentic Development Beyond the CLI",
+    "kind": "Talk",
+    "abstract": "Agentic development feels magical to some and overhyped to others. Harnesses like Claude Code or Codex have been built around the local loop: a single developer changing code before opening a PR. \r\nInside organizations, agents hit walls: repo boundaries, a lack of memory and unresolved issues around trust.\r\nFixing this requires a higher level of abstraction: the *meta-harness*. Just as meta-frameworks let React stay simple, a meta-harness keeps the agent CLI focused on its job while bringing the pieces teams need to ship. \r\nBig AI labs, open-source tools and startups are building tools and hoping to be the next platform that makes AI be a force-multiplier for teams. This talk is going to sample their approaches and make the case for the meta-harness as the next frontier for org-wide adoption.",
+    "lingua": "en",
+    "livello": "intermediate",
+    "tags": [
+      "Agentic AI",
+      "Tools",
+      "Software Engineering"
+    ],
+    "room": "Nexus",
+    "ora": "11:30–12:15",
+    "coSpeaker": [],
+    "carta": "/carte/max-kless.jpg",
+    "numero": "018/058"
+  },
+  {
+    "id": "124489d5-c9f0-41cc-a78f-0b27da79f17c",
+    "name": "Matteo Gazzurelli",
+    "role": "Fractional CTO and Agentic AI consultant, helping teams move agents from demo to production.",
+    "talk": "What's Left for Developers When Agents Write the Code",
+    "kind": "Talk + Demo",
+    "abstract": "The short answer is that the job doesn't disappear, it moves. \r\n\r\nWhen AI compresses implementation, the bottleneck shifts upstream and downstream: requirements, architecture and verification stay human-paced, while a developer's value moves from typing the solution to defining goals, boundaries and acceptance criteria. The same raw model, inside different harnesses, produces very different results, so the useful question is no longer only which model, but which system runs it.\r\n\r\nIn this talk (inspired by the latest SDLC paper by Addy Osmani & c) I will walk through the shift from implementor to conductor and orchestrator, and from vibe coding to agentic engineering, with the concrete pieces that make the difference: rule files and context engineering to give an agent the onboarding you'd give a new colleague, MCP to connect it to real tools, hooks and tests as a safety net, human review as a gate that changes shape but doesn't disappear. \r\nI show a demo using Antigravity (recorded probably or live) harness intercepting an error live, because the point isn't a perfect agent, it's a verifiable process.\r\n\r\nPeople leave with one operational question: how much of their project's standard is readable by an agent today, and where they can start without risking production.",
+    "lingua": "it",
+    "livello": "advanced",
+    "tags": [
+      "AI",
+      "Soft Skills",
+      "Software Engineering"
+    ],
+    "room": "Nexus",
+    "ora": "09:30–10:15",
+    "coSpeaker": [],
+    "carta": "/carte/matteo-gazzurelli.jpg",
+    "numero": "019/058"
+  },
+  {
+    "id": "2b0dba1a-7bbb-42bd-b6ae-0e09d66f95aa",
+    "name": "Marco Arena",
+    "role": "C++ Software Engineer & Community Lead",
+    "talk": "Coding Gym",
+    "kind": "Workshop",
+    "abstract": "Coding Gym is an international format of programming labs open to any language. It is designed for continuous improvement, guided by the principles of the Coding Gym manifesto:\r\n\r\n\"We help others practice programming, software development, and communication skills by making coding laboratories open to any programming language where cooperation is valued over competition, doing and sharing are valued over teaching, and where competing solutions come with discussing and understanding tradeoffs.\"\r\n\r\nHow It Works:\r\n\r\nCoding Gym is NOT a contest!\r\n\r\nParticipants (\"gymmers\") work in pairs on 2 self-contained problems using any programming language of their choice, all within a browser.\r\n\r\nAfter each exercise, a Coding Gym \"trainer\" moderates a retrospective session where gymmers present their solutions, discussing pros, cons, and tradeoffs.\r\n\r\nThe trainer may also set new questions such as \"What happens if the input size increases by 100 times?\", or may introduce new solutions and concepts, potentially altering the problem on the spot to encourage discussion on changes and their impact. These variations can lead to discovering new ways of simplifying or complicating the problem.\r\n\r\nPhilosophy:\r\n\r\nCoding Gym is not tied to any specific paradigm or programming language. It uses any tool, technique, or paradigm necessary to achieve its goals, promoting freedom in problem-solving.\r\n\r\nFor each problem, Coding Gym encourages gymmers to explore, study, and experiment with alternative solutions and variations. This approach helps participants break free from their mental patterns, evolving and learning new concepts and techniques. Each new solution brings compromises, advantages, and disadvantages that must be identified and understood as part of the practice.\r\n\r\nA key aspect of Coding Gym is recognizing that technical skills alone are not sufficient. Professionals also need to master effective communication and collaboration. Coding Gym provides opportunities to practice these skills directly, enabling participants to collaborate with others and to explain their ideas and solutions in public. We eliminate stress, anxiety, and strict deadlines, replacing them with a fun and friendly atmosphere that fosters creativity and personal growth.\r\n\r\nMore information on https://coding-gym.org\r\n\r\n---\r\nCoding Gym has been conceived, developed, and directed by Marco Arena since 2016.",
+    "lingua": "it",
+    "livello": "intermediate",
+    "tags": [
+      "Soft Skills",
+      "Software Engineering"
+    ],
+    "room": "Workshop",
+    "ora": "09:30–11:00",
+    "coSpeaker": [],
+    "carta": "/carte/marco-arena.jpg",
+    "numero": "020/058"
+  },
+  {
+    "id": "b6009e00-7c8d-4756-82bb-29ff59afa254",
+    "name": "Lorenzo Satta Chiris",
+    "role": "Director of Excode",
+    "talk": "AURA: A Practical Risk Framework for Autonomous AI Agents",
+    "kind": "Talk",
+    "abstract": "Autonomous AI agents are moving from experiments into systems that touch real customers, money and infrastructure, yet many teams still improvise their safety practices, with maturity and governance representing one of the major barriers to AI deployment. This session presents AURA, an open source Agent Autonomy Risk Assessment framework developed from research and production deployments at the University of Exeter. We turn diffuse concerns about “rogue agents” into concrete risk dimensions and a quantitative scoring model that engineers, product owners and risk stakeholders can use in a shared, repeatable way.\r\nUsing realistic failure scenarios for tool using agents, we show how AURA helps you reason about autonomy levels, capability scope, tool access, oversight mechanisms and monitoring. The focus is on integrating risk thinking into your existing MLOps stack through checklists, scorecards and design templates, managing Governance and Compliance requirements. Attendees will leave with a reference risk scoring tool, example assessments and a set of practical steps for embedding agent risk reviews into their current development and deployment lifecycle.",
+    "lingua": "en",
+    "livello": "intermediate",
+    "tags": [
+      "Agentic AI",
+      "Generative AI",
+      "Software Engineering"
+    ],
+    "room": "Coworking",
+    "ora": "16:00–16:45",
+    "coSpeaker": [],
+    "carta": "/carte/lorenzo-satta-chiris.jpg",
+    "numero": "021/058"
+  },
+  {
+    "id": "bb0a1bbb-66e6-446b-992d-e9680a2b1449",
+    "name": "Harry Zhang",
+    "role": "Founding Engineer at Fleet Health",
+    "talk": "Become a Founding Engineering - you're already ready!",
+    "kind": "Lightning talk",
+    "abstract": "I took the leap of jumping from IC to Founding Engineer over the last year and it's been a huge learning curve. While trying to contribute meaningful code to realise an idea, I have learned a lot in terms of internal politics, culture, and management. You can't just sit back and code behind a screen, you have to become a people person and get your hands dirty in every pie. This is what it takes to build a $100M revenue business in health care over 12 months. This is not a place I thought I'd be but I wanted to share how important it is for people to take the leap to build new and cool things, with cool people - how meaningful and rewarding the work is, and how it's more important than ever in our current era where you can prototype anything with a single prompt.",
+    "lingua": "en",
+    "livello": "intermediate",
+    "tags": [
+      "AI",
+      "Soft Skills",
+      "Software Engineering"
+    ],
+    "room": "Coworking",
+    "ora": "12:15–13:00",
+    "coSpeaker": [],
+    "carta": "/carte/harry-zhang.jpg",
+    "numero": "023/058"
+  },
+  {
+    "id": "3ca13269-73ac-4dad-b02c-b6a6c82fe80c",
+    "name": "Francesco Montelli",
+    "role": "Freelance software engineer",
+    "talk": "L'incidente non parla PromQL: un'interfaccia naturale sopra il tuo stack di osservabilità",
+    "kind": "Talk",
+    "abstract": "Un alert scatta. Apri la dashboard e trovi due indizi che si contraddicono: un segnale punta in una direzione, un altro, nello stesso momento, punta in un'altra. Quale dei due segui? Nessun runbook scritto a priori copre il caso in cui due segnali indipendenti puntano altrove, ed è più o meno sempre così quando l'incidente è quello vero, non quello da manuale.\r\n\r\nDurante il talk presenterò un agente che fa esattamente questo mestiere: guarda log, trace e metriche di un incidente reale e sceglie tra più cause plausibili quando le prove non convergono: un'interfaccia che ti risparmia di ricordarti dove cercare e con quale sintassi interrogare ogni backend. Lo dimostro dal vivo con LangGraph, orchestrando query verso uno stack di osservabilità (OpenTelemetry, Loki, Tempo, Mimir).\r\n\r\nRacconto la costruzione di un approccio che sto mettendo alla prova, non ancora una soluzione pronta: come si dà al modello la libertà di scegliere quale fonte interrogare più a fondo per ogni ipotesi, quando fermarsi, e come argomenta una conclusione con un livello di confidenza anche quando restano cause aperte, invece di restituire un verdetto univoco e definitivo.",
+    "lingua": "it",
+    "livello": "intermediate",
+    "tags": [
+      "AI",
+      "Generative AI",
+      "Software Engineering"
+    ],
+    "room": "Coworking",
+    "ora": "14:45–15:30",
+    "coSpeaker": [],
+    "carta": "/carte/francesco-montelli.jpg",
+    "numero": "024/058"
+  },
+  {
+    "id": "042e16e8-c352-4329-82bf-0ca3a2ef02f3",
+    "name": "Fabian Krumbholz",
+    "role": "Google Developer Expert for Web",
+    "talk": "AI-Native Web Development, Hands-On",
+    "kind": "Workshop",
+    "abstract": "The way we build for the web just changed: AI no longer only autocompletes code — it builds a real page, runs it in the browser, tests it, and fixes its own mistakes. In this fully hands-on session you'll experience that shift firsthand, going from a blank screen to a modern web page you designed and shipped live, all in one sitting. Whether you're a student making your first real project or a professional modernising how you work, you'll leave with something real online and a way of building you can put to use the very next day.",
+    "lingua": "en",
+    "livello": "beginner",
+    "tags": [
+      "AI",
+      "Agentic AI",
+      "Generative AI",
+      "Software Engineering"
+    ],
+    "room": "Workshop",
+    "ora": "16:00–18:15",
+    "coSpeaker": [],
+    "carta": "/carte/fabian-krumbholz.jpg",
+    "numero": "026/058"
+  },
+  {
+    "id": "ddf81268-9ef6-47aa-a923-a2aaeb09e42f",
+    "name": "Emmanuele Villa",
+    "role": "Mobile Architect & Tech Leader",
+    "talk": "From Prompts to Production: Building Android Apps with Skills and MCP Tools",
+    "kind": "Talk",
+    "abstract": "In this session, we'll explore how to move beyond basic prompting by combining custom Skills and Model Context Protocol (MCP) tools to create a powerful Android-focused development environment.\r\n\r\nThrough live demonstrations and real-world examples, you'll learn how Skills can encode architectural guidelines, coding standards, and project knowledge, while MCP tools provide secure access to external systems, documentation, APIs, and development workflows.\r\n\r\nTogether, they enable AI agents to understand your codebase, automate repetitive tasks, and assist with complex Android development activities.",
+    "lingua": "en",
+    "livello": "intermediate",
+    "tags": [
+      "AI",
+      "Agentic AI",
+      "Generative AI",
+      "Android"
+    ],
+    "room": "Coworking",
+    "ora": "14:00–14:45",
+    "coSpeaker": [],
+    "carta": "/carte/emmanuele-villa.jpg",
+    "numero": "028/058"
+  },
+  {
+    "id": "77a9e204-6e59-44d6-873a-1e3226251d38",
+    "name": "Michele Giacobazzi",
+    "role": "CTO @ WellD",
+    "talk": "Before Delegating to Agents: ADRs and Spec-Driven Development as the Foundation for AI in the Team",
+    "kind": "Talk",
+    "abstract": "SPARklE manages real users' energy data and provides guidance with direct financial impact. In this context human control isn't negotiable. But that doesn't mean giving up on AI: it means building the right foundations before delegating.\r\n\r\nThe project started as a EU/PNRR-funded research initiative, with four companies involved and features explored freely. When WellD decided to turn it into a product, we found ourselves with a completely different backlog than expected, and an architecture that showed the marks of the research phase's pace.\r\n\r\nTwo practices helped us rebuild solidity without slowing down development. \r\nFirst: a formal Architecture Decision Record system where developers and architects discuss a decision with AI, stress-test it with explicit alternatives and trade-offs, and submit it to adversarial review by the team before moving forward:  decisions are more solid, shared, and traceable. \r\nSecond: Spec-Driven Development, which forces us to refine requirements before writing code and which lets us delegate part of the development to dedicated agents, while keeping human supervision and quality verification on every step.\r\n\r\nThis isn't a full multi-agent system yet. It's the infrastructure a multi-agent system needs to operate reliably in a domain where mistakes have a real cost.\r\n\r\nKey takeaways:\r\n\r\nIn domains with sensitive data and financial impact, AI gets introduced by building control foundations, not bypassing them.\r\nADRs with adversarial review make architectural decisions more solid and shared, with or without AI\r\nSpec-Driven Development is the practical prerequisite for delegating development to agents while keeping human oversight",
+    "lingua": "en",
+    "livello": "beginner",
+    "tags": [],
+    "room": "Nexus",
+    "ora": "14:00–14:45",
+    "coSpeaker": [],
+    "carta": "/carte/michele-giacobazzi.jpg",
+    "numero": "029/058"
+  }
+]

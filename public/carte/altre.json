@@ -1,0 +1,338 @@
+[
+  {
+    "id": "carta-01",
+    "name": "DevFest Milano",
+    "role": "La carta dell’evento",
+    "gruppo": "evento",
+    "carta": "/carte/001-devfest-milano.jpg",
+    "numero": "001/058"
+  },
+  {
+    "id": "carta-02",
+    "name": "BizzyNow",
+    "role": "Partner della DevFest Milano 2026",
+    "gruppo": "partner",
+    "carta": "/carte/002-bizzynow.jpg",
+    "numero": "002/058"
+  },
+  {
+    "id": "carta-03",
+    "name": "Google",
+    "role": "Partner della DevFest Milano 2026",
+    "gruppo": "partner",
+    "carta": "/carte/003-google.jpg",
+    "numero": "003/058"
+  },
+  {
+    "id": "carta-04",
+    "name": "Datwave",
+    "role": "Partner della DevFest Milano 2026",
+    "gruppo": "partner",
+    "carta": "/carte/004-datwave.jpg",
+    "numero": "004/058"
+  },
+  {
+    "id": "carta-05",
+    "name": "Randstad Box",
+    "role": "La location della DevFest Milano 2026",
+    "gruppo": "location",
+    "carta": "/carte/005-randstad-box.jpg",
+    "numero": "005/058"
+  },
+  {
+    "id": "carta-22",
+    "name": "Ishan Bhatt",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/022-ishan-bhatt.jpg",
+    "numero": "022/058"
+  },
+  {
+    "id": "carta-25",
+    "name": "Antonio Perrone",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/025-antonio-perrone.jpg",
+    "numero": "025/058"
+  },
+  {
+    "id": "carta-27",
+    "name": "Impulso Red Deployment",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/027-impulso-red-deployment.jpg",
+    "numero": "027/058"
+  },
+  {
+    "id": "carta-30",
+    "name": "Araldo Prismatico Coroutine",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/030-araldo-prismatico-coroutine.jpg",
+    "numero": "030/058"
+  },
+  {
+    "id": "carta-31",
+    "name": "Attacco Metaprogramming",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/031-attacco-metaprogramming.jpg",
+    "numero": "031/058"
+  },
+  {
+    "id": "carta-32",
+    "name": "Campus Protocol Buffers",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/032-campus-protocol-buffers.jpg",
+    "numero": "032/058"
+  },
+  {
+    "id": "carta-33",
+    "name": "Drake Event Sourcing",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/033-drake-event-sourcing.jpg",
+    "numero": "033/058"
+  },
+  {
+    "id": "carta-34",
+    "name": "Elfo Command Line Interface",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/034-elfo-command-line-interface.jpg",
+    "numero": "034/058"
+  },
+  {
+    "id": "carta-35",
+    "name": "Hub Message Queue",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/035-hub-message-queue.jpg",
+    "numero": "035/058"
+  },
+  {
+    "id": "carta-36",
+    "name": "Just In Time Compiler",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/036-just-in-time-compiler.jpg",
+    "numero": "036/058"
+  },
+  {
+    "id": "carta-37",
+    "name": "Laboratorio Remote Procedure Call",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/037-laboratorio-remote-procedure-call.jpg",
+    "numero": "037/058"
+  },
+  {
+    "id": "carta-38",
+    "name": "Migrazione Developer Experience",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/038-migrazione-developer-experience.jpg",
+    "numero": "038/058"
+  },
+  {
+    "id": "carta-39",
+    "name": "Oracolo Astrale Golang",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/039-oracolo-astrale-golang.jpg",
+    "numero": "039/058"
+  },
+  {
+    "id": "carta-40",
+    "name": "Override Microservizio",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/040-override-microservizio.jpg",
+    "numero": "040/058"
+  },
+  {
+    "id": "carta-41",
+    "name": "Piano REST Endpoint",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/041-piano-rest-endpoint.jpg",
+    "numero": "041/058"
+  },
+  {
+    "id": "carta-42",
+    "name": "Processo Concurrent Programming",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/042-processo-concurrent-programming.jpg",
+    "numero": "042/058"
+  },
+  {
+    "id": "carta-43",
+    "name": "Procedura Fuzz Testing",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/043-procedura-fuzz-testing.jpg",
+    "numero": "043/058"
+  },
+  {
+    "id": "carta-44",
+    "name": "Reazione Unit Test",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/044-reazione-unit-test.jpg",
+    "numero": "044/058"
+  },
+  {
+    "id": "carta-45",
+    "name": "Risposta DevOps",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/045-risposta-devops.jpg",
+    "numero": "045/058"
+  },
+  {
+    "id": "carta-46",
+    "name": "Rollback",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/046-rollback.jpg",
+    "numero": "046/058"
+  },
+  {
+    "id": "carta-47",
+    "name": "Sequenza Pull Request",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/047-sequenza-pull-request.jpg",
+    "numero": "047/058"
+  },
+  {
+    "id": "carta-48",
+    "name": "Zona Garbage Collector",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/048-zona-garbage-collector.jpg",
+    "numero": "048/058"
+  },
+  {
+    "id": "carta-49",
+    "name": "Strategia Feature Flag",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/049-strategia-feature-flag.jpg",
+    "numero": "049/058"
+  },
+  {
+    "id": "carta-50",
+    "name": "Zona OpenAPI Specification",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/050-zona-openapi-specification.jpg",
+    "numero": "050/058"
+  },
+  {
+    "id": "carta-51",
+    "name": "Zona Pipeline CI/CD",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/051-zona-pipeline-ci-cd.jpg",
+    "numero": "051/058"
+  },
+  {
+    "id": "carta-52",
+    "name": "DevFest Milano HOLO",
+    "role": "La carta dell’evento",
+    "gruppo": "evento",
+    "carta": "/carte/052-devfest-milano-holo.jpg",
+    "numero": "052/058"
+  },
+  {
+    "id": "carta-53",
+    "name": "Armanas Povilionis",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/053-armanas-povilionis.jpg",
+    "numero": "053/058"
+  },
+  {
+    "id": "carta-54",
+    "name": "Manuel Caldarese",
+    "role": "Team DevFest Milano",
+    "gruppo": "team",
+    "carta": "/carte/054-manuel-caldarese.jpg",
+    "numero": "054/058"
+  },
+  {
+    "id": "carta-55",
+    "name": "Davide Tresoldi",
+    "role": "Team DevFest Milano",
+    "gruppo": "team",
+    "carta": "/carte/055-davide-tresoldi.jpg",
+    "numero": "055/058"
+  },
+  {
+    "id": "carta-56",
+    "name": "Daniele Bonaldo",
+    "role": "Team DevFest Milano",
+    "gruppo": "team",
+    "carta": "/carte/056-daniele-bonaldo.jpg",
+    "numero": "056/058"
+  },
+  {
+    "id": "carta-57",
+    "name": "Lorenzo De Francesco",
+    "role": "Team DevFest Milano",
+    "gruppo": "team",
+    "carta": "/carte/057-lorenzo-de-francesco.jpg",
+    "numero": "057/058"
+  },
+  {
+    "id": "carta-58",
+    "name": "Matteo Rocco",
+    "role": "Team DevFest Milano",
+    "gruppo": "team",
+    "carta": "/carte/058-matteo-rocco.jpg",
+    "numero": "058/058"
+  },
+  {
+    "id": "carta-59",
+    "name": "Bot AI Agentico Custom",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/059-bot-ai-agentico-custom.jpg",
+    "numero": ""
+  },
+  {
+    "id": "carta-60",
+    "name": "Signore dei Prompt",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/060-signore-dei-prompt.jpg",
+    "numero": ""
+  },
+  {
+    "id": "carta-61",
+    "name": "Agent Swarm",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/061-agent-swarm.jpg",
+    "numero": ""
+  },
+  {
+    "id": "carta-62",
+    "name": "Master Protocol",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/062-master-protocol.jpg",
+    "numero": ""
+  },
+  {
+    "id": "carta-63",
+    "name": "Open Claw Cluster",
+    "role": "Una carta BizzyMagic della DevFest Milano 2026",
+    "gruppo": "collezione",
+    "carta": "/carte/063-open-claw-cluster.jpg",
+    "numero": ""
+  }
+]

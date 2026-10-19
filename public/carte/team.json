@@ -1,0 +1,52 @@
+[
+  {
+    "id": "team-davide-tresoldi",
+    "name": "Davide Tresoldi",
+    "role": "Organizzatore GDG Cloud Milano",
+    "lavoro": "Senior Cloud Architect @ Datwave",
+    "gruppo": "team",
+    "foto": "/carte/team-davide-tresoldi.jpg",
+    "carta": "/carte/055-davide-tresoldi.jpg",
+    "numero": "055/058"
+  },
+  {
+    "id": "team-daniele-bonaldo",
+    "name": "Daniele Bonaldo",
+    "role": "Organizzatore GDG Milano",
+    "lavoro": "Google Developer Expert Android",
+    "gruppo": "team",
+    "foto": "/carte/team-daniele-bonaldo.jpg",
+    "carta": "/carte/056-daniele-bonaldo.jpg",
+    "numero": "056/058"
+  },
+  {
+    "id": "team-manuel-caldarese",
+    "name": "Manuel Caldarese",
+    "role": "Organizzatore GDG Milano",
+    "lavoro": "AI Specialist",
+    "gruppo": "team",
+    "foto": "/carte/team-manuel-caldarese.jpg",
+    "carta": "/carte/054-manuel-caldarese.jpg",
+    "numero": "054/058"
+  },
+  {
+    "id": "team-lorenzo-de-francesco",
+    "name": "Lorenzo De Francesco",
+    "role": "Organizzatore GDG Milano",
+    "lavoro": "CTO @ Azimut Marketplace",
+    "gruppo": "team",
+    "foto": "/carte/team-lorenzo-de-francesco.jpg",
+    "carta": "/carte/057-lorenzo-de-francesco.jpg",
+    "numero": "057/058"
+  },
+  {
+    "id": "team-matteo-rocco",
+    "name": "Matteo Rocco",
+    "role": "Organizzatore GDG Cloud Milano",
+    "lavoro": "Cloud & Data Engineer @ Datwave",
+    "gruppo": "team",
+    "foto": "/carte/team-matteo-rocco.jpg",
+    "carta": "/carte/058-matteo-rocco.jpg",
+    "numero": "058/058"
+  }
+]
